@@ -18,7 +18,7 @@ extern fn ztray_linux_dbus_set_items(items: [*]const LinuxItemC, n: c_int) c_int
 extern fn ztray_linux_dbus_dispatch() void;
 extern fn ztray_linux_dbus_take_pending() c_int;
 
-extern fn ztray_linux_tray_install(tooltip: [*:0]const u8, icon_name_or_null: ?[*:0]const u8) c_int;
+extern fn ztray_linux_tray_install(tooltip: [*:0]const u8, icon_name_or_null: ?[*:0]const u8, icon_png: ?[*]const u8, icon_png_len: c_int) c_int;
 extern fn ztray_linux_tray_shutdown() void;
 extern fn ztray_linux_tray_set_items(items: [*]const LinuxItemC, n: c_int) c_int;
 extern fn ztray_linux_tray_take_pending() c_int;
@@ -138,7 +138,7 @@ pub fn pollActionId() c_int {
 }
 
 pub fn installTrayIcon(allocator: std.mem.Allocator, tooltip: []const u8, icon_name: ?[]const u8, icon_png: ?[]const u8) error{ TrayInstallFailed, TrayAlreadyInstalled, OutOfMemory }!void {
-    if (icon_png != null) std.log.warn("ztray: icon_png ignored on Linux; use linux_icon_name for StatusNotifierItem", .{});
+    if (icon_png) |png| if (png.len > @as(usize, @intCast(std.math.maxInt(c_int)))) return error.TrayInstallFailed;
     if (tray_session_active.swap(true, .acq_rel)) return error.TrayAlreadyInstalled;
     errdefer _ = tray_session_active.store(false, .release);
 
@@ -147,9 +147,12 @@ pub fn installTrayIcon(allocator: std.mem.Allocator, tooltip: []const u8, icon_n
     const icon_z: ?[:0]u8 = if (icon_name) |n| try allocator.dupeZ(u8, n) else null;
     defer if (icon_z) |z| allocator.free(z);
 
+    const png = icon_png orelse "";
     if (ztray_linux_tray_install(
         tip_z.ptr,
         if (icon_z) |z| z.ptr else null,
+        if (png.len > 0) png.ptr else null,
+        @intCast(png.len),
     ) == 0) {
         _ = tray_session_active.store(false, .release);
         return error.TrayInstallFailed;

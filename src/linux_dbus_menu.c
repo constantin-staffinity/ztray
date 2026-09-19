@@ -11,6 +11,7 @@
 
 void ztray_linux_tray_shutdown(void);
 int ztray_linux_dbus_init(void);
+int ztray_linux_icon_pixmap_from_png(const unsigned char *data, int len, int *out_width, int *out_height, unsigned char **out_argb);
 
 #define ZTRAY_MENU_PATH "/org/ztray/app/Menu"
 #define ZTRAY_TRAY_MENU_PATH "/org/ztray/app/TrayMenu"
@@ -38,6 +39,9 @@ static atomic_int g_pending_tray_action = -1;
 static DBusConnection *g_conn;
 static char *g_tray_tooltip = NULL;
 static char *g_tray_icon_name = NULL;
+static unsigned char *g_tray_icon_argb = NULL;
+static int g_tray_icon_width;
+static int g_tray_icon_height;
 static int g_tray_sni_active;
 static atomic_int g_appmenu_registrar_has_owner = -1;
 static int g_appmenu_registrar_query_in_flight;
@@ -219,6 +223,8 @@ static DBusHandlerResult reply_introspect_sni(DBusMessage *msg) {
         "  <property name=\"Title\" type=\"s\" access=\"read\"/>\n"
         "  <property name=\"Status\" type=\"s\" access=\"read\"/>\n"
         "  <property name=\"IconName\" type=\"s\" access=\"read\"/>\n"
+        "  <property name=\"IconPixmap\" type=\"a(iiay)\" access=\"read\"/>\n"
+        "  <signal name=\"NewIcon\"/>\n"
         "  <property name=\"Menu\" type=\"o\" access=\"read\"/>\n"
         " </interface>\n"
         "</node>\n";
@@ -246,6 +252,22 @@ static DBusHandlerResult reply_properties_dbusmenu_version(DBusMessage *msg) {
     dbus_connection_send(g_conn, reply, NULL);
     dbus_message_unref(reply);
     return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+static int append_tray_icon_pixmap(DBusMessageIter *iter) {
+    DBusMessageIter array, entry;
+    if (!dbus_message_iter_open_container(iter, DBUS_TYPE_ARRAY, "(iiay)", &array)) return 0;
+    if (g_tray_icon_argb == NULL) return dbus_message_iter_close_container(iter, &array);
+    if (!dbus_message_iter_open_container(&array, DBUS_TYPE_STRUCT, NULL, &entry)) return 0;
+    dbus_int32_t width = g_tray_icon_width;
+    dbus_int32_t height = g_tray_icon_height;
+    if (!dbus_message_iter_append_basic(&entry, DBUS_TYPE_INT32, &width)) return 0;
+    if (!dbus_message_iter_append_basic(&entry, DBUS_TYPE_INT32, &height)) return 0;
+    if (!dbus_message_iter_append_fixed_array(&entry, DBUS_TYPE_BYTE, &g_tray_icon_argb,
+                                              g_tray_icon_width * g_tray_icon_height * 4)) return 0;
+    if (!dbus_message_iter_close_container(&array, &entry)) return 0;
+    if (!dbus_message_iter_close_container(iter, &array)) return 0;
+    return 1;
 }
 
 static DBusHandlerResult reply_sni_property(DBusMessage *msg, const char *prop) {
@@ -279,6 +301,13 @@ static DBusHandlerResult reply_sni_property(DBusMessage *msg, const char *prop) 
         const char *v = g_tray_icon_name ? g_tray_icon_name : "application-x-executable";
         dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, "s", &variant);
         dbus_message_iter_append_basic(&variant, DBUS_TYPE_STRING, &v);
+        dbus_message_iter_close_container(&iter, &variant);
+    } else if (strcmp(prop, "IconPixmap") == 0) {
+        dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, "a(iiay)", &variant);
+        if (!append_tray_icon_pixmap(&variant)) {
+            dbus_message_unref(reply);
+            return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+        }
         dbus_message_iter_close_container(&iter, &variant);
     } else if (strcmp(prop, "Menu") == 0) {
         const char *menu_obj_path = ZTRAY_TRAY_MENU_PATH;
@@ -439,6 +468,14 @@ static DBusHandlerResult handle_about_to_show(DBusMessage *msg) {
 static DBusHandlerResult handle_event_group(DBusMessage *msg) {
     if (!dbus_message_has_signature(msg, "a(isvu)")) return reply_invalid_args(msg);
     return reply_empty(msg);
+}
+
+static void emit_new_icon(void) {
+    if (!g_conn) return;
+    DBusMessage *sig = dbus_message_new_signal(ZTRAY_SNI_PATH, "org.kde.StatusNotifierItem", "NewIcon");
+    if (!sig) return;
+    dbus_connection_send(g_conn, sig, NULL);
+    dbus_message_unref(sig);
 }
 
 static void emit_layout_updated(const char *path, dbus_uint32_t rev) {
@@ -658,12 +695,22 @@ int ztray_linux_tray_set_items(const ZTrayLinuxItem *items, int n) {
     return 1;
 }
 
-int ztray_linux_tray_install(const char *tooltip_utf8, const char *icon_name_or_null) {
+int ztray_linux_tray_install(const char *tooltip_utf8, const char *icon_name_or_null, const unsigned char *icon_png, int icon_png_len) {
     if (ztray_linux_dbus_init() == 0) return 0;
+
+    unsigned char *icon_argb = NULL;
+    int icon_width = 0;
+    int icon_height = 0;
+    if (icon_png != NULL && icon_png_len > 0 &&
+        !ztray_linux_icon_pixmap_from_png(icon_png, icon_png_len, &icon_width, &icon_height, &icon_argb))
+        return 0;
 
     free(g_tray_tooltip);
     g_tray_tooltip = tooltip_utf8 ? strdup(tooltip_utf8) : strdup("ztray");
-    if (!g_tray_tooltip) return 0;
+    if (!g_tray_tooltip) {
+        free(icon_argb);
+        return 0;
+    }
 
     free(g_tray_icon_name);
     if (icon_name_or_null && icon_name_or_null[0])
@@ -671,7 +718,12 @@ int ztray_linux_tray_install(const char *tooltip_utf8, const char *icon_name_or_
     else
         g_tray_icon_name = NULL;
 
+    free(g_tray_icon_argb);
+    g_tray_icon_argb = icon_argb;
+    g_tray_icon_width = icon_width;
+    g_tray_icon_height = icon_height;
     g_tray_sni_active = 1;
+    emit_new_icon();
     (void)register_sni_watcher();
     return 1;
 }
@@ -682,6 +734,10 @@ void ztray_linux_tray_shutdown(void) {
     g_tray_tooltip = NULL;
     free(g_tray_icon_name);
     g_tray_icon_name = NULL;
+    free(g_tray_icon_argb);
+    g_tray_icon_argb = NULL;
+    g_tray_icon_width = 0;
+    g_tray_icon_height = 0;
     free_tray_items();
     g_tray_revision = 0;
     atomic_store(&g_pending_tray_action, -1);
