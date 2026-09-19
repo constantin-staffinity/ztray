@@ -39,7 +39,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 
 ## P2 — automated verification
 
-- [ ] **Broaden unit coverage.** Action-ID validation unit coverage was added in `6b68084`; add tests for item flattening, 512-item handling, lifecycle/replacement state transitions, and tray/menu error paths. (`src/types.zig:147-218`, `build.zig:356-364`)
+- [ ] **Broaden unit coverage.** Action-ID validation was added in `6b68084`; Linux item flattening, shortcut metadata, and 512-item boundary tests were added in `75935ca`. Add lifecycle/replacement state-transition and tray/menu error-path tests. (`src/types.zig:147-218`, `src/linux.zig:207-258`, `build.zig:357-375`)
 - [ ] **Add Linux D-Bus protocol integration tests.** The real backend is built under an isolated session bus in `1813991`; add protocol assertions for registrar detection, StatusNotifier registration, menu layout/property responses, malformed calls, action events, and watcher absence.
 - [ ] **Add native smoke tests for macOS and Windows.** Cover AppKit/Win32 menu/tray initialization, resource teardown, and basic action dispatch on real runners.
 - [ ] **Test DVUI behavior.** Verify shortcut registration, cleanup, fallback mode selection, and capacity/error behavior.
