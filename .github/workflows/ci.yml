@@ -49,3 +49,7 @@ jobs:
 
       - name: Cross-build examples
         run: zig build ci
+
+      - name: Rebuild from a clean Zig cache
+        shell: bash
+        run: rm -rf .zig-cache && zig build test && zig build ci
