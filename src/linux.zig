@@ -204,3 +204,54 @@ pub fn pollTrayActionId() c_int {
 pub fn pumpLinuxDBus() void {
     ztray_linux_dbus_dispatch();
 }
+
+test "flattened menu preserves shortcut metadata" {
+    const allocator = std.testing.allocator;
+    var flat: std.ArrayList(LinuxItemC) = .empty;
+    defer {
+        freeFlatLabels(allocator, &flat);
+        flat.deinit(allocator);
+    }
+
+    const menu: types.Menu = .{
+        .title = "File",
+        .items = &.{.{ .action = .{
+            .title = "Open",
+            .action_id = 7,
+            .shortcut = .{ .key = .o, .primary = true, .shift = true },
+        } }},
+    };
+    var next_id: i32 = undefined;
+    try appendDbusMenuRoot(allocator, &flat, &next_id);
+    try appendMenuAsChildOf(allocator, &flat, 0, menu, &next_id);
+
+    try std.testing.expectEqual(@as(usize, 3), flat.items.len);
+    try std.testing.expectEqual(@as(u8, 'o'), flat.items[2].shortcut_key);
+    try std.testing.expectEqual(@as(u8, @intCast(types.modifierMask(.{ .key = .o, .primary = true, .shift = true }))), flat.items[2].shortcut_modifiers);
+}
+
+test "flattened menu returns MenuTooLarge at capacity" {
+    const allocator = std.testing.allocator;
+    var flat: std.ArrayList(LinuxItemC) = .empty;
+    defer {
+        freeFlatLabels(allocator, &flat);
+        flat.deinit(allocator);
+    }
+
+    var next_id: i32 = undefined;
+    try appendDbusMenuRoot(allocator, &flat, &next_id);
+    while (flat.items.len < max_menu_items) {
+        try flat.append(allocator, .{
+            .id = next_id,
+            .parent_id = 0,
+            .action_id = -1,
+            .flags = FLAG_SEPARATOR,
+            .shortcut_modifiers = 0,
+            .shortcut_key = 0,
+            .label = (try allocator.dupeZ(u8, "")).ptr,
+        });
+        next_id += 1;
+    }
+
+    try std.testing.expectError(error.MenuTooLarge, appendDbusMenuRoot(allocator, &flat, &next_id));
+}

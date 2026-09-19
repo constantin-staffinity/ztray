@@ -365,8 +365,18 @@ pub fn build(b: *std.Build) void {
     });
     const types_tests = b.addTest(.{ .name = "zmenu-types-tests", .root_module = types_test_mod });
     const run_types_tests = b.addRunArtifact(types_tests);
+
+    const linux_test_mod = b.createModule(.{
+        .root_source_file = b.path("src/linux.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    const linux_tests = b.addTest(.{ .name = "zmenu-linux-tests", .root_module = linux_test_mod });
+    const run_linux_tests = b.addRunArtifact(linux_tests);
+
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_types_tests.step);
+    test_step.dependOn(&run_linux_tests.step);
 
     const ci_step = b.step("ci", "Build all examples for CI targets.");
     setupZtrayCi(b, ci_step, force_dvui_menu);
