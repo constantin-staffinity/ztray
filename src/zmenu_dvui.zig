@@ -13,9 +13,7 @@ var stored_bar: ?zmenu.MenuBar = null;
 var menu_serial: u32 = 0;
 var synced_serial: u32 = 0;
 
-const max_shortcut_slots = 128;
-var shortcut_ids_storage: [max_shortcut_slots]zmenu.ActionId = undefined;
-var shortcut_ids_len: usize = 0;
+var shortcut_ids: []zmenu.ActionId = &.{};
 
 var last_win: ?*dvui.Window = null;
 
@@ -46,7 +44,7 @@ pub fn installMainMenu(parent_allocator: std.mem.Allocator, menu_bar: zmenu.Menu
         removeRegisteredKeybinds(win);
         last_win = null;
     }
-    shortcut_ids_len = 0;
+    shortcut_ids = &.{};
     synced_serial = 0;
 
     if (menu_arena_init) {
@@ -69,7 +67,7 @@ pub fn shutdownMenu() void {
         removeRegisteredKeybinds(win);
         last_win = null;
     }
-    shortcut_ids_len = 0;
+    shortcut_ids = &.{};
     synced_serial = 0;
     if (menu_arena_init) {
         menu_arena.deinit();
@@ -84,9 +82,8 @@ fn menuBindName(buf: *[64]u8, action_id: zmenu.ActionId) []const u8 {
 
 fn removeRegisteredKeybinds(win: *dvui.Window) void {
     var buf: [64]u8 = undefined;
-    var i: usize = 0;
-    while (i < shortcut_ids_len) : (i += 1) {
-        const name = menuBindName(&buf, shortcut_ids_storage[i]);
+    for (shortcut_ids) |action_id| {
+        const name = menuBindName(&buf, action_id);
         _ = win.keybinds.remove(name);
     }
 }
@@ -118,11 +115,19 @@ fn syncMenuKeybinds(win: *dvui.Window) !void {
     if (menu_serial == synced_serial) return;
 
     removeRegisteredKeybinds(win);
-    shortcut_ids_len = 0;
+    shortcut_ids = &.{};
 
     const mb = stored_bar orelse return;
 
+    var new_shortcut_ids: std.ArrayList(zmenu.ActionId) = .empty;
+    const arena = menu_arena.allocator();
     var buf: [64]u8 = undefined;
+    errdefer {
+        for (new_shortcut_ids.items) |action_id| {
+            const name = menuBindName(&buf, action_id);
+            _ = win.keybinds.remove(name);
+        }
+    }
     for (mb.menus) |menu| {
         for (menu.items) |item| {
             switch (item) {
@@ -133,13 +138,12 @@ fn syncMenuKeybinds(win: *dvui.Window) !void {
                     const kb = shortcutToKeybind(sc);
                     const name = try std.fmt.bufPrint(buf[0..], "zmenu_action_{d}", .{act.action_id});
                     try win.keybinds.put(win.gpa, name, kb);
-                    if (shortcut_ids_len >= shortcut_ids_storage.len) return error.OutOfMemory;
-                    shortcut_ids_storage[shortcut_ids_len] = act.action_id;
-                    shortcut_ids_len += 1;
+                    try new_shortcut_ids.append(arena, act.action_id);
                 },
             }
         }
     }
+    shortcut_ids = try new_shortcut_ids.toOwnedSlice(arena);
     synced_serial = menu_serial;
     last_win = win;
 }
@@ -151,11 +155,10 @@ fn dispatchMenuShortcuts() void {
         switch (e.evt) {
             .key => |ke| {
                 if (ke.action != .down and ke.action != .repeat) continue;
-                var i: usize = 0;
-                while (i < shortcut_ids_len) : (i += 1) {
-                    const name = menuBindName(&keybind_buf, shortcut_ids_storage[i]);
+                for (shortcut_ids) |action_id| {
+                    const name = menuBindName(&keybind_buf, action_id);
                     if (ke.matchBind(name)) {
-                        queueAction(shortcut_ids_storage[i]);
+                        queueAction(action_id);
                         break;
                     }
                 }
