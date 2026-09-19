@@ -6,6 +6,8 @@ typedef struct {
     int32_t parent_id;
     int32_t action_id;
     uint32_t flags;
+    uint8_t shortcut_modifiers;
+    uint8_t shortcut_key;
     const char *label;
 } ZTrayLinuxItem;
 

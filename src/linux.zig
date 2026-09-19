@@ -7,6 +7,8 @@ pub const LinuxItemC = extern struct {
     parent_id: i32,
     action_id: i32,
     flags: u32,
+    shortcut_modifiers: u8,
+    shortcut_key: u8,
     label: [*:0]const u8,
 };
 
@@ -40,6 +42,10 @@ pub fn appMenuRegistrarHasOwner() ?bool {
     };
 }
 
+fn shortcutModifiers(shortcut: types.Shortcut) u8 {
+    return @intCast(types.modifierMask(shortcut));
+}
+
 fn freeFlatLabels(allocator: std.mem.Allocator, flat: *std.ArrayList(LinuxItemC)) void {
     for (flat.items) |it| allocator.free(std.mem.span(it.label));
 }
@@ -52,6 +58,8 @@ fn appendDbusMenuRoot(allocator: std.mem.Allocator, flat: *std.ArrayList(LinuxIt
         .parent_id = -1,
         .action_id = -1,
         .flags = FLAG_SUBMENU,
+        .shortcut_modifiers = 0,
+        .shortcut_key = 0,
         .label = (try allocator.dupeZ(u8, "")).ptr,
     });
     next_id.* = 1;
@@ -73,6 +81,8 @@ fn appendMenuAsChildOf(
         .parent_id = parent_id,
         .action_id = -1,
         .flags = FLAG_SUBMENU,
+        .shortcut_modifiers = 0,
+        .shortcut_key = 0,
         .label = (try allocator.dupeZ(u8, menu.title)).ptr,
     });
 
@@ -87,6 +97,8 @@ fn appendMenuAsChildOf(
                     .parent_id = menu_id,
                     .action_id = -1,
                     .flags = FLAG_SEPARATOR,
+                    .shortcut_modifiers = 0,
+                    .shortcut_key = 0,
                     .label = (try allocator.dupeZ(u8, "")).ptr,
                 });
             },
@@ -102,6 +114,8 @@ fn appendMenuAsChildOf(
                     .parent_id = menu_id,
                     .action_id = a.action_id,
                     .flags = fl,
+                    .shortcut_modifiers = if (a.shortcut) |shortcut| shortcutModifiers(shortcut) else 0,
+                    .shortcut_key = if (a.shortcut) |shortcut| shortcut.key.keyEquivalentByte() else 0,
                     .label = (try allocator.dupeZ(u8, a.title)).ptr,
                 });
             },

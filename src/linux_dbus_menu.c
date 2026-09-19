@@ -23,6 +23,8 @@ typedef struct {
     int32_t parent_id;
     int32_t action_id;
     uint32_t flags;
+    uint8_t shortcut_modifiers;
+    uint8_t shortcut_key;
     char *label;
 } ZTrayItem;
 
@@ -96,6 +98,31 @@ static int append_dict_bool(DBusMessageIter *dict, const char *key, dbus_bool_t 
     return 1;
 }
 
+static int append_dict_shortcut(DBusMessageIter *dict, uint8_t modifiers, uint8_t key) {
+    static const char *const modifier_names[] = { "Control", "Shift", "Alt", "Super" };
+    const uint8_t modifier_masks[] = { (1u << 0) | (1u << 3), 1u << 1, 1u << 2, 1u << 4 };
+    DBusMessageIter entry, variant, shortcuts, shortcut;
+    if (!dbus_message_iter_open_container(dict, DBUS_TYPE_DICT_ENTRY, NULL, &entry)) return 0;
+    char *name = "shortcut";
+    if (!dbus_message_iter_append_basic(&entry, DBUS_TYPE_STRING, &name)) return 0;
+    if (!dbus_message_iter_open_container(&entry, DBUS_TYPE_VARIANT, "aas", &variant)) return 0;
+    if (!dbus_message_iter_open_container(&variant, DBUS_TYPE_ARRAY, "as", &shortcuts)) return 0;
+    if (!dbus_message_iter_open_container(&shortcuts, DBUS_TYPE_ARRAY, "s", &shortcut)) return 0;
+    for (int i = 0; i < 4; i++) {
+        if ((modifiers & modifier_masks[i]) == 0) continue;
+        char *modifier = (char *)modifier_names[i];
+        if (!dbus_message_iter_append_basic(&shortcut, DBUS_TYPE_STRING, &modifier)) return 0;
+    }
+    char key_string[2] = { (char)key, '\0' };
+    char *key_value = key_string;
+    if (!dbus_message_iter_append_basic(&shortcut, DBUS_TYPE_STRING, &key_value)) return 0;
+    if (!dbus_message_iter_close_container(&shortcuts, &shortcut)) return 0;
+    if (!dbus_message_iter_close_container(&variant, &shortcuts)) return 0;
+    if (!dbus_message_iter_close_container(&entry, &variant)) return 0;
+    if (!dbus_message_iter_close_container(dict, &entry)) return 0;
+    return 1;
+}
+
 static int append_properties(DBusMessageIter *dict, ZTrayItem *node) {
     const char *empty = "";
     if (node->flags & FLAG_SEPARATOR) {
@@ -108,6 +135,7 @@ static int append_properties(DBusMessageIter *dict, ZTrayItem *node) {
     if (!append_dict_string(dict, "label", lab)) return 0;
     dbus_bool_t en = (node->flags & FLAG_DISABLED) ? FALSE : TRUE;
     if (!append_dict_bool(dict, "enabled", en)) return 0;
+    if (node->shortcut_key != 0 && !append_dict_shortcut(dict, node->shortcut_modifiers, node->shortcut_key)) return 0;
     if (node->flags & FLAG_SUBMENU) {
         if (!append_dict_string(dict, "children-display", "submenu")) return 0;
     }
@@ -643,6 +671,8 @@ typedef struct {
     int32_t parent_id;
     int32_t action_id;
     uint32_t flags;
+    uint8_t shortcut_modifiers;
+    uint8_t shortcut_key;
     const char *label;
 } ZTrayLinuxItem;
 
@@ -662,6 +692,8 @@ static int replace_items(ZTrayItem *target, int *target_n, const ZTrayLinuxItem 
         replacement[i].parent_id = items[i].parent_id;
         replacement[i].action_id = items[i].action_id;
         replacement[i].flags = items[i].flags;
+        replacement[i].shortcut_modifiers = items[i].shortcut_modifiers;
+        replacement[i].shortcut_key = items[i].shortcut_key;
         replacement[i].label = items[i].label ? strdup(items[i].label) : strdup("");
         if (!replacement[i].label) {
             free_items(replacement, n);
