@@ -26,5 +26,7 @@
         "build.zig.zon",
         "src",
         "examples",
+        "vendor",
+        "LICENSE",
     },
 }
