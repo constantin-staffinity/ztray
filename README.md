@@ -93,10 +93,10 @@ zig build ci     # cross-build examples (Linux: x11 / wayland / both × arches)
 
 | Step | Binary | Notes |
 |------|--------|-------|
-| `zig build run-tray` | `ztray-tray-minimal` | Tray icon + context menu only. |
-| `zig build run-dvui` | `ztray-dvui` | DVUI window + ztray. Native menu by default; `-Dforce_dvui_menu=true` for in-app. |
-| `zig build run-wio` | `ztray-wio-menu` | [wio](https://github.com/ypsvlq/wio) window + native menus only. |
-| `zig build run-wio-window` | `ztray-wio-window` | wio + `zwindow.setFrameChrome(.full_vibrancy)`. |
+| `zig build run-tray` | `ztray-minimal` | Tray icon + context menu only. |
+| `zig build run-dvui` | `zmenu-dvui` | DVUI window + ztray. Native menu by default; `-Dforce_dvui_menu=true` for in-app. |
+| `zig build run-wio` | `zmenu-wio` | [wio](https://github.com/ypsvlq/wio) window + native menus only. |
+| `zig build run-wio-window` | `zwindow-wio` | wio + `zwindow.setFrameChrome(.full_vibrancy)`. |
 | `zig build run-wio-tray` | `ztray-wio-tray` | wio + native menu bar + tray + `zwindow.setFrameChrome`. |
 
 On Linux, wio and tray examples link dynamically where applicable.
