@@ -39,5 +39,9 @@ jobs:
       - name: Build native examples
         run: zig build
 
+      - name: Build with an isolated Linux session bus
+        if: runner.os == 'Linux'
+        run: dbus-run-session -- zig build
+
       - name: Cross-build examples
         run: zig build ci
