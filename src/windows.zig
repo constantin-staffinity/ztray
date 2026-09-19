@@ -174,23 +174,33 @@ fn appendItemsToPopupMenu(allocator: std.mem.Allocator, popup: HMENU, menu: type
     }
 }
 
+fn appendMenuToMainMenu(allocator: std.mem.Allocator, main_menu: HMENU, menu: types.Menu) !void {
+    const submenu = CreatePopupMenu() orelse return error.MenuInstallFailed;
+    errdefer _ = DestroyMenu(submenu);
+    try appendItemsToPopupMenu(allocator, submenu, menu, command_base);
+
+    const title = try std.unicode.wtf8ToWtf16LeAllocZ(allocator, menu.title);
+    defer allocator.free(title);
+    if (AppendMenuW(main_menu, MF_POPUP, @intFromPtr(submenu), title.ptr) == 0) return error.MenuInstallFailed;
+}
+
 pub fn installMainMenu(allocator: std.mem.Allocator, hwnd: HWND, menu_bar: types.MenuBar) error{ OutOfMemory, MenuInstallFailed, ActionIdOutOfRange, InvalidWtf8 }!void {
     if (menu_installed.swap(true, .acq_rel)) return error.MenuInstallFailed;
     errdefer _ = menu_installed.store(false, .release);
     if (hwnd == null) return error.MenuInstallFailed;
 
     const main_menu = CreateMenu() orelse return error.MenuInstallFailed;
+    errdefer _ = DestroyMenu(main_menu);
+    var attached = false;
+    errdefer if (attached) {
+        _ = SetMenu(hwnd, null);
+        _ = DrawMenuBar(hwnd);
+    };
 
-    for (menu_bar.menus) |menu| {
-        const submenu = CreatePopupMenu() orelse return error.MenuInstallFailed;
-        try appendItemsToPopupMenu(allocator, submenu, menu, command_base);
-
-        const title = try std.unicode.wtf8ToWtf16LeAllocZ(allocator, menu.title);
-        defer allocator.free(title);
-        if (AppendMenuW(main_menu, MF_POPUP, @intFromPtr(submenu), title.ptr) == 0) return error.MenuInstallFailed;
-    }
+    for (menu_bar.menus) |menu| try appendMenuToMainMenu(allocator, main_menu, menu);
 
     if (SetMenu(hwnd, main_menu) == 0) return error.MenuInstallFailed;
+    attached = true;
     _ = DrawMenuBar(hwnd);
     if (SetWindowSubclass(hwnd, ztraySubclassProc, subclass_id, 0) == 0) return error.MenuInstallFailed;
 }
