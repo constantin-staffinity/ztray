@@ -29,6 +29,10 @@ jobs:
       - name: Fetch lazy dependencies
         run: zig fetch
 
+      - name: Check Zig formatting
+        shell: bash
+        run: test -z "$(zig fmt --check build.zig src examples)"
+
       - name: Run tests
         run: zig build test
 
