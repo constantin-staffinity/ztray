@@ -269,16 +269,17 @@ fn cacheFindEmpty() ?usize {
     return null;
 }
 
-fn cachePut(surface: *anyopaque, blur: *Proxy) void {
+fn cachePut(surface: *anyopaque, blur: *Proxy) bool {
     if (cacheFind(surface)) |idx| {
         state.blur_cache[idx].blur = blur;
-        return;
+        return true;
     }
     if (cacheFindEmpty()) |idx| {
         state.blur_cache[idx] = .{ .surface = surface, .blur = blur };
-        return;
+        return true;
     }
-    log.debug("zwindow: Wayland blur cache full (cap={d}); proxy will leak for process lifetime", .{BLUR_CACHE_CAP});
+    log.debug("zwindow: Wayland blur cache full (cap={d}); blur disabled for surface", .{BLUR_CACHE_CAP});
+    return false;
 }
 
 fn cacheTake(surface: *anyopaque) ?*Proxy {
@@ -331,7 +332,15 @@ fn applyKdeBlur(surface: *Proxy) void {
         state.fns.wl_proxy_get_version(blur),
         0,
     );
-    cachePut(surface, blur);
+    if (!cachePut(surface, blur)) {
+        _ = state.fns.wl_proxy_marshal_flags(
+            blur,
+            OP_BLUR_RELEASE,
+            null,
+            state.fns.wl_proxy_get_version(blur),
+            WL_MARSHAL_FLAG_DESTROY,
+        );
+    }
 }
 
 fn releaseKdeBlur(surface: *Proxy) void {
