@@ -90,7 +90,7 @@ Call `zmenu.pumpEvents()` or `ztray.pumpEvents()` each frame. On Windows, integr
 
 `pollActionId` and `pollTrayActionId` clear one pending action. If multiple actions occur before polling, the newest action replaces prior unpolled actions. Action IDs must be non-negative; Linux D-Bus menus support at most 512 flattened items and otherwise return `error.MenuTooLarge`.
 
-On Linux, native menus require a session D-Bus and an AppMenu registrar. The combined DVUI module uses the in-app menubar only when registrar absence is known; while asynchronous discovery is pending, it installs the native menu. Linux tray icons use `linux_icon_name`, which must be resolvable through the Freedesktop icon theme. Embedded PNG tray icons are not yet supported on Linux.
+On Linux, native menus require a session D-Bus and an AppMenu registrar. The combined DVUI module uses the in-app menubar only when registrar absence is known; while asynchronous discovery is pending, it installs the native menu. Linux tray icons accept `linux_icon_name` for Freedesktop theme lookup and embedded PNG data, which is exposed as StatusNotifier `IconPixmap`.
 
 ---
 
