@@ -1,0 +1,58 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:3e5d53b2-fc31-4df1-84f6-0a7190408811",
+  "version": 1,
+  "metadata": {
+    "component": {
+      "type": "library",
+      "name": "ztray",
+      "version": "0.1.0-dev.1",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "name": "stb_image",
+      "version": "2.30",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "properties": [
+        {
+          "name": "ztray:source",
+          "value": "vendor/stb_image.h; public-domain alternative also available"
+        }
+      ]
+    },
+    {
+      "type": "library",
+      "name": "dvui",
+      "version": "14703fa6d6fea0c608886b5ce2071ef49323c8c0",
+      "purl": "pkg:github/david-vanderson/dvui@14703fa6d6fea0c608886b5ce2071ef49323c8c0"
+    },
+    {
+      "type": "library",
+      "name": "wio",
+      "version": "d4f6edda8d1b96d373f82f4fc3f3bc9e17bf0973",
+      "purl": "pkg:github/ypsvlq/wio@d4f6edda8d1b96d373f82f4fc3f3bc9e17bf0973"
+    },
+    {
+      "type": "library",
+      "name": "zigwin32",
+      "version": "ec98bb4d9eea532320a8551720a9e3ec6de64994",
+      "purl": "pkg:github/marlersoft/zigwin32@ec98bb4d9eea532320a8551720a9e3ec6de64994"
+    }
+  ]
+}
