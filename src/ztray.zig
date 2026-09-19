@@ -111,7 +111,9 @@ pub const windows = struct {
 
 const macos = struct {
     extern fn ZTrayMacOSTrayInstall(tooltip: [*:0]const u8, icon_path_utf8_or_null: ?[*:0]const u8, png_bytes: ?[*]const u8, png_len: usize) bool;
-    extern fn ZTrayMacOSTrayClearMenu() bool;
+    extern fn ZTrayMacOSTrayBeginMenuUpdate() bool;
+    extern fn ZTrayMacOSTrayCommitMenuUpdate() bool;
+    extern fn ZTrayMacOSTrayCancelMenuUpdate() void;
     extern fn ZTrayMacOSTrayAddItem(title: [*:0]const u8, action_id: c_int, key: [*:0]const u8, modifiers: u32, enabled: bool) callconv(.c) bool;
     extern fn ZTrayMacOSTrayAddSeparator() callconv(.c) bool;
     extern fn ZTrayMacOSTrayPollAction() c_int;
@@ -139,7 +141,8 @@ const macos = struct {
 
     pub fn setTrayMenu(allocator: std.mem.Allocator, menu: TrayMenu) SetTrayMenuError!void {
         if (!@This().active.load(.acquire)) return error.MenuInstallFailed;
-        if (!ZTrayMacOSTrayClearMenu()) return error.MenuInstallFailed;
+        if (!ZTrayMacOSTrayBeginMenuUpdate()) return error.MenuInstallFailed;
+        errdefer ZTrayMacOSTrayCancelMenuUpdate();
         for (menu.items) |item| {
             switch (item) {
                 .separator => {
@@ -161,6 +164,7 @@ const macos = struct {
                 },
             }
         }
+        if (!ZTrayMacOSTrayCommitMenuUpdate()) return error.MenuInstallFailed;
     }
 
     pub fn shutdown() void {

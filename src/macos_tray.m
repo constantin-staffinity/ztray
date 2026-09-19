@@ -4,6 +4,7 @@
 
 static NSStatusItem *ztray_tray_status_item = nil;
 static NSMenu *ztray_tray_menu = nil;
+static NSMenu *ztray_tray_pending_menu = nil;
 static id ztray_tray_menu_target = nil;
 static atomic_int ztray_tray_pending_action_id = -1;
 
@@ -87,16 +88,28 @@ bool ZTrayMacOSTrayInstall(const char *tooltip, const char *icon_path_utf8_or_nu
     return true;
 }
 
-bool ZTrayMacOSTrayClearMenu(void) {
-    if (ztray_tray_menu == nil) return false;
-    [ztray_tray_menu removeAllItems];
+bool ZTrayMacOSTrayBeginMenuUpdate(void) {
+    if (ztray_tray_menu == nil || ztray_tray_pending_menu != nil) return false;
+    ztray_tray_pending_menu = [[NSMenu alloc] initWithTitle:ztray_tray_menu.title ?: @"Tray"];
+    return ztray_tray_pending_menu != nil;
+}
+
+bool ZTrayMacOSTrayCommitMenuUpdate(void) {
+    if (ztray_tray_status_item == nil || ztray_tray_pending_menu == nil) return false;
+    ztray_tray_menu = ztray_tray_pending_menu;
+    ztray_tray_pending_menu = nil;
+    ztray_tray_status_item.menu = ztray_tray_menu;
     return true;
 }
 
-bool ZTrayMacOSTrayAddItem(const char *title, int action_id, const char *key, unsigned int modifiers, bool enabled) {
-    if (ztray_tray_menu == nil) return false;
+void ZTrayMacOSTrayCancelMenuUpdate(void) {
+    ztray_tray_pending_menu = nil;
+}
 
-    NSMenuItem *item = [ztray_tray_menu addItemWithTitle:ztrayTrayString(title) action:@selector(performZTrayTrayAction:) keyEquivalent:ztrayTrayString(key)];
+bool ZTrayMacOSTrayAddItem(const char *title, int action_id, const char *key, unsigned int modifiers, bool enabled) {
+    if (ztray_tray_pending_menu == nil) return false;
+
+    NSMenuItem *item = [ztray_tray_pending_menu addItemWithTitle:ztrayTrayString(title) action:@selector(performZTrayTrayAction:) keyEquivalent:ztrayTrayString(key)];
     if (item == nil) return false;
 
     item.target = ztray_tray_menu_target;
@@ -107,8 +120,8 @@ bool ZTrayMacOSTrayAddItem(const char *title, int action_id, const char *key, un
 }
 
 bool ZTrayMacOSTrayAddSeparator(void) {
-    if (ztray_tray_menu == nil) return false;
-    [ztray_tray_menu addItem:NSMenuItem.separatorItem];
+    if (ztray_tray_pending_menu == nil) return false;
+    [ztray_tray_pending_menu addItem:NSMenuItem.separatorItem];
     return true;
 }
 
@@ -123,6 +136,7 @@ void ZTrayMacOSTrayShutdown(void) {
         ztray_tray_status_item = nil;
     }
     ztray_tray_menu = nil;
+    ztray_tray_pending_menu = nil;
     ztray_tray_menu_target = nil;
     atomic_store(&ztray_tray_pending_action_id, -1);
 }
