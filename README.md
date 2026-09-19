@@ -67,6 +67,15 @@ exe.addImport("zwindow", zwindow_mod);
 | Windows | `zwindow.setFrameChrome(hwnd, policy)` | |
 | Linux | `zwindow.setFrameChrome(linux_frame_target, policy)` | X11: theme hint + opacity + KDE blur region; Wayland: clears opaque region, attaches KWin blur on `.full_vibrancy` |
 
+`FrameChrome` support differs by platform:
+
+| Platform | `r`, `g`, `b` | `a` | `dark` | `policy` |
+|----------|---------------|-----|--------|----------|
+| macOS | Tint | Tint opacity | Appearance hint | `.tray_compatible` or `.full_vibrancy` |
+| Windows | Fixed DWM acrylic tint | Fixed opaque acrylic | Fixed dark DWM path | Ignored |
+| Linux X11 | Ignored | `_NET_WM_WINDOW_OPACITY` | Ignored | KWin blur region for `.full_vibrancy` when available |
+| Linux Wayland | Ignored | Opaque region is cleared; compositor decides blending | Ignored | KWin blur protocol for `.full_vibrancy` when available |
+
 Pass `-Dzwindow_unix_backends=x11,wayland` (default: both). Wayland support `dlopen`s `libwayland-client.so.0` at runtime — no static link needed.
 
 `zwindow` is **not** re-exported from the core `ztray` module.
