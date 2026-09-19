@@ -24,7 +24,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 ### Lifecycle and event semantics
 
 - [x] **Define main-menu lifecycle semantics.** Completed in `502a7da`: native menubars are documented as process-lifetime and repeated installation returns `MenuAlreadyInstalled` consistently. A future teardown/replacement API remains an enhancement. (`src/zmenu.zig:39-70`, `src/macos.zig:67-83`, `src/windows.zig:187-211`, `src/linux.zig:112-134`)
-- [ ] **Clean up Windows native menubar resources.** Construction-error cleanup completed in `6b9b659`; normal teardown/subclass removal requires a future menubar teardown API. (`src/windows.zig:177-211`)
+- [x] **Clean up Windows native menubar resources.** Construction-error cleanup completed in `6b9b659`; `1b0bcb7` destroys the tracked native menu and resets menu state when the owner window is destroyed. (`src/windows.zig:187-210`, `src/windows.zig:478-510`)
 - [x] **Make tray menu replacement transactional.** Completed across Linux (`4f4a2dd`), Windows (`7a2565c`), and macOS (`3f0bb2a`): a new native menu is fully built before replacing the active menu. (`src/macos_tray.m:90-130`, `src/ztray.zig:141-168`, `src/linux_dbus_menu.c:665-711`)
 - [x] **Define action-delivery behavior.** Completed in `4d9a337`: public polling APIs document latest-action-wins semantics until polled. (`src/zmenu.zig:82-95`, `src/ztray.zig:69-84`)
 - [x] **Validate action IDs uniformly.** Completed in `6b68084`: the public menu/tray boundaries reject negative action IDs before platform dispatch. (`src/types.zig:100-112`, `src/zmenu.zig:58-68`, `src/ztray.zig:60-68`)
