@@ -90,6 +90,8 @@ Call `zmenu.pumpEvents()` or `ztray.pumpEvents()` each frame. On Windows, integr
 
 `pollActionId` and `pollTrayActionId` clear one pending action. If multiple actions occur before polling, the newest action replaces prior unpolled actions. Action IDs must be non-negative; Linux D-Bus menus support at most 512 flattened items and otherwise return `error.MenuTooLarge`.
 
+Menu titles, shortcut labels, tooltips, icon paths, and PNG bytes are copied or decoded during installation; callers may release them after the call returns. PNG icons on Windows and Linux are limited to 1024×1024 pixels and 4 MiB of decoded RGBA data.
+
 On Linux, native menus require a session D-Bus and an AppMenu registrar. The combined DVUI module uses the in-app menubar only when registrar absence is known; while asynchronous discovery is pending, it installs the native menu. Linux tray icons accept `linux_icon_name` for Freedesktop theme lookup and embedded PNG data, which is exposed as StatusNotifier `IconPixmap`.
 
 ---
