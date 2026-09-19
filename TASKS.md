@@ -34,7 +34,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 
 - [x] **Do not silently discard DVUI shortcut synchronization failures.** Completed in `2e6cd98`: initial shortcut synchronization errors now propagate through `InstallMainMenuError`. (`src/zmenu_with_dvui.zig:43-53`, `src/zmenu.zig:35-44`)
 - [x] **Remove or explicitly expose DVUI’s 128-shortcut limit.** Completed in `d576128`: shortcut IDs use allocator-backed storage owned by the menu arena. (`src/zmenu_dvui.zig:16-18`, `src/zmenu_dvui.zig:114-165`)
-- [ ] **Resolve zwindow option no-ops.** **Verified.** Windows ignores supplied color, alpha, and dark settings; X11/Wayland accept fields that are currently unused. Implement supported fields, split platform-specific options, or clearly document no-ops. (`src/window_common.zig:39-47`, `src/window_windows.zig:241-257`, `src/window_linux_x11.zig:1-3`, `src/window_linux_wayland.zig:1-7`)
+- [x] **Resolve zwindow option no-ops.** Completed documentation in `54edcd8`: README support matrix identifies platform-specific supported and ignored `FrameChrome` fields. Implementing additional platform fields remains a future enhancement. (`README.md:70-78`)
 - [ ] **Fix/document Wayland resource lifetime limits.** **Verified.** One display is supported, the registry/dynamic library are process-lifetime, and a 16-entry blur cache deliberately leaks when full. Provide deinitialization and growable storage, or make limits explicit and fail safely. (`src/window_linux_wayland.zig:115-130`, `src/window_linux_wayland.zig:201-208`, `src/window_linux_wayland.zig:249-252`, `src/window_linux_wayland.zig:272-282`)
 
 ## P2 — automated verification
@@ -45,15 +45,15 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 - [ ] **Test DVUI behavior.** Verify shortcut registration, cleanup, fallback mode selection, and capacity/error behavior.
 - [ ] **Test zwindow backends.** Add focused platform smoke harnesses for macOS, Windows, X11, and Wayland behavior and degradation paths.
 - [ ] **Expand target coverage policy.** **Verified.** Existing compile CI omits explicit macOS architectures and Windows ARM64. Publish a support matrix and test each supported target. (`build.zig:373-385`)
-- [ ] **Automate formatting and C/Objective-C analysis.** Add `zig fmt` checking plus Clang warnings/static analysis and sanitizer-capable test jobs for native sources.
+- [ ] **Automate formatting and C/Objective-C analysis.** Zig formatting check completed in `3d73cc6`; add Clang warnings/static analysis and sanitizer-capable test jobs for native sources. (`.github/workflows/ci.yml:32-34`)
 
 ## P2 — documentation and developer experience
 
-- [ ] **Expand public platform documentation.** **Verified.** README ends after basic build/examples and omits lifecycle, platform limitations, and operational details. Document supported OS/architectures/Zig versions, event loop/pump requirements, thread rules, action semantics, ownership, and teardown. (`README.md:15-87`)
-- [ ] **Document Linux desktop requirements and troubleshooting.** Cover session D-Bus, AppMenu registrar, StatusNotifier watcher, icon-theme lookup, desktops without support, and DVUI fallback behavior. (`src/zmenu_with_dvui.zig:1-4`, `src/linux_dbus_menu.c:438-464`)
-- [ ] **Document lifecycle/error recovery.** Show initialization, installation, polling/pumping, shutdown, retry behavior, and reinstallation constraints for both menu and tray APIs. (`src/ztray.zig:78-85`, `src/zmenu.zig:35-43`)
-- [ ] **Publish a zwindow support matrix.** Clearly identify each `FrameChrome` field’s support/degradation semantics by platform and compositor.
-- [ ] **Add API documentation for ownership and input limits.** Specify retained/copied string and PNG byte lifetimes, maximum item counts, supported action IDs, and thread affinity.
+- [ ] **Expand public platform documentation.** Lifecycle, event loop, thread-affinity, action semantics, Linux caveats, and zwindow support matrix were documented in `54edcd8` and `e5eaa33`; add explicit OS/architecture support policy and ownership details. (`README.md:70-98`)
+- [ ] **Document Linux desktop requirements and troubleshooting.** Session D-Bus, AppMenu registrar, icon theme, and DVUI fallback behavior are documented in `e5eaa33`; add StatusNotifier watcher troubleshooting. (`README.md:94-98`)
+- [x] **Document lifecycle/error recovery.** Completed in `e5eaa33`: covers initialization constraints, polling/pumping, shutdown, and reinstallation behavior. (`README.md:84-98`)
+- [x] **Publish a zwindow support matrix.** Completed in `54edcd8`. (`README.md:70-78`)
+- [ ] **Add API documentation for ownership and input limits.** Thread affinity, action IDs, and Linux item maximum are documented in `e5eaa33`; add retained/copied input lifetimes and PNG size limit. (`README.md:84-98`)
 
 ## P2 — release, governance, and supply chain
 
@@ -66,7 +66,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 
 - [ ] **Consider richer menu items.** **Suggested.** Add nested submenus, checked/radio states, dynamic labels, and item icons to the common model. (`src/types.zig:77-98`)
 - [ ] **Consider explicit tray click events.** **Suggested.** Expose click/double-click callbacks or polling events in addition to context-menu actions. (`src/windows.zig:27-36`, `src/windows.zig:434-457`)
-- [ ] **Add PNG resource limits.** **Suggested.** Enforce maximum dimensions/decoded byte size before decoding caller-supplied icon PNGs on Windows. (`src/windows_tray_png.c:11-56`)
+- [x] **Add PNG resource limits.** Completed in `db8c8c2`: Windows rejects PNGs exceeding 1024×1024 pixels or 4 MiB decoded RGBA data before allocation. (`src/windows_tray_png.c:11-24`)
 - [ ] **Improve type safety around native handles.** **Suggested.** Replace raw `*anyopaque` inputs with typed platform wrappers/helper constructors where feasible. (`src/window_root.zig:35-58`, `src/window_common.zig:3-27`)
 - [ ] **Reduce duplicated backend logic.** **Suggested.** Consolidate overlapping platform tray/menu implementation paths to reduce drift. (`src/ztray.zig:99-537`, `src/macos.zig`, `src/windows.zig`, `src/linux.zig`)
 - [ ] **Stabilize and namespace build APIs.** **Suggested.** Give public module factories a documented naming/compatibility policy to avoid further setup drift. (`build.zig:73-164`)
