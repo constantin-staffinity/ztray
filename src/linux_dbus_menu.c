@@ -301,16 +301,25 @@ static DBusHandlerResult reply_empty(DBusMessage *msg) {
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+static DBusHandlerResult reply_invalid_args(DBusMessage *msg) {
+    DBusMessage *reply = dbus_message_new_error(msg, DBUS_ERROR_INVALID_ARGS, "Invalid method arguments");
+    if (reply) {
+        dbus_connection_send(g_conn, reply, NULL);
+        dbus_message_unref(reply);
+    }
+    return DBUS_HANDLER_RESULT_HANDLED;
+}
+
 /* Properties.Get: args are (interface_name, property_name) per spec */
 static DBusHandlerResult handle_properties_get_v2(const char *path, DBusMessage *msg) {
+    if (!dbus_message_has_signature(msg, "ss")) return reply_invalid_args(msg);
     DBusMessageIter args;
-    if (!dbus_message_iter_init(msg, &args)) return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    if (!dbus_message_iter_init(msg, &args)) return reply_invalid_args(msg);
     const char *iface = NULL;
     dbus_message_iter_get_basic(&args, &iface);
-    if (!dbus_message_iter_next(&args)) return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+    dbus_message_iter_next(&args);
     const char *prop = NULL;
     dbus_message_iter_get_basic(&args, &prop);
-    if (!iface || !prop) return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     if ((strcmp(path, ZTRAY_MENU_PATH) == 0 || strcmp(path, ZTRAY_TRAY_MENU_PATH) == 0) &&
         strcmp(iface, "com.canonical.dbusmenu") == 0 && strcmp(prop, "Version") == 0)
@@ -336,15 +345,14 @@ static DBusHandlerResult handle_get_layout(const char *path, DBusMessage *msg) {
         revision = &g_tray_revision;
     }
 
+    if (!dbus_message_has_signature(msg, "iias")) return reply_invalid_args(msg);
     DBusMessageIter args;
     int32_t parent_id = 0;
     int32_t depth = -1;
-    if (!dbus_message_iter_init(msg, &args)) return DBUS_HANDLER_RESULT_HANDLED;
-    if (dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_INT32) return reply_empty(msg);
+    if (!dbus_message_iter_init(msg, &args)) return reply_invalid_args(msg);
     dbus_message_iter_get_basic(&args, &parent_id);
-    if (!dbus_message_iter_next(&args)) return reply_empty(msg);
+    dbus_message_iter_next(&args);
     dbus_message_iter_get_basic(&args, &depth);
-    (void)dbus_message_iter_next(&args);
 
     ZTrayItem *node = find_in(items, n, parent_id);
     if (!node && parent_id != 0) return reply_empty(msg);
@@ -405,19 +413,28 @@ static DBusHandlerResult handle_event(const char *path, DBusMessage *msg) {
         pending = &g_pending_tray_action;
     }
 
+    if (!dbus_message_has_signature(msg, "isvu")) return reply_invalid_args(msg);
     DBusMessageIter args;
-    if (!dbus_message_iter_init(msg, &args)) return reply_empty(msg);
+    if (!dbus_message_iter_init(msg, &args)) return reply_invalid_args(msg);
     int32_t id = 0;
     dbus_message_iter_get_basic(&args, &id);
-    if (!dbus_message_iter_next(&args)) return reply_empty(msg);
+    dbus_message_iter_next(&args);
     const char *ev = NULL;
     dbus_message_iter_get_basic(&args, &ev);
-    (void)dbus_message_iter_next(&args);
-    (void)dbus_message_iter_next(&args);
     if (ev && strcmp(ev, "clicked") == 0) {
         ZTrayItem *it = find_in(items, n, id);
         if (it && it->action_id >= 0) atomic_store(pending, it->action_id);
     }
+    return reply_empty(msg);
+}
+
+static DBusHandlerResult handle_about_to_show(DBusMessage *msg) {
+    if (!dbus_message_has_signature(msg, "i")) return reply_invalid_args(msg);
+    return reply_empty(msg);
+}
+
+static DBusHandlerResult handle_event_group(DBusMessage *msg) {
+    if (!dbus_message_has_signature(msg, "a(isvu)")) return reply_invalid_args(msg);
     return reply_empty(msg);
 }
 
@@ -483,8 +500,8 @@ static DBusHandlerResult filter_message(DBusConnection *connection, DBusMessage 
         if (strcmp(iface, "com.canonical.dbusmenu") == 0) {
             if (strcmp(member, "GetLayout") == 0) return handle_get_layout(path, message);
             if (strcmp(member, "Event") == 0) return handle_event(path, message);
-            if (strcmp(member, "AboutToShow") == 0) return reply_empty(message);
-            if (strcmp(member, "EventGroup") == 0) return reply_empty(message);
+            if (strcmp(member, "AboutToShow") == 0) return handle_about_to_show(message);
+            if (strcmp(member, "EventGroup") == 0) return handle_event_group(message);
         }
         return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }
