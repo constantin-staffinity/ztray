@@ -30,7 +30,7 @@ const FLAG_DISABLED: u32 = 4;
 var menu_installed: std.atomic.Value(bool) = .init(false);
 var tray_session_active: std.atomic.Value(bool) = .init(false);
 
-/// Session D-Bus `NameHasOwner` for `com.canonical.AppMenu.Registrar`. `false` means no global AppMenu host (typical DVUI in-app menubar fallback). `null` if unknown (D-Bus error or stub build).
+/// Session D-Bus `NameHasOwner` for `com.canonical.AppMenu.Registrar`. `false` means no global AppMenu host (typical DVUI in-app menubar fallback). `null` while the asynchronous query is pending, unavailable, or stubbed.
 pub fn appMenuRegistrarHasOwner() ?bool {
     return switch (ztray_linux_appmenu_registrar_has_owner()) {
         0 => false,

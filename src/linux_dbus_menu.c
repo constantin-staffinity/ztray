@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 void ztray_linux_tray_shutdown(void);
+int ztray_linux_dbus_init(void);
 
 #define ZTRAY_MENU_PATH "/org/ztray/app/Menu"
 #define ZTRAY_TRAY_MENU_PATH "/org/ztray/app/TrayMenu"
@@ -38,6 +39,8 @@ static DBusConnection *g_conn;
 static char *g_tray_tooltip = NULL;
 static char *g_tray_icon_name = NULL;
 static int g_tray_sni_active;
+static atomic_int g_appmenu_registrar_has_owner = -1;
+static int g_appmenu_registrar_query_in_flight;
 
 enum { FLAG_SEPARATOR = 1u, FLAG_SUBMENU = 2u, FLAG_DISABLED = 4u };
 
@@ -510,66 +513,62 @@ static DBusHandlerResult filter_message(DBusConnection *connection, DBusMessage 
     return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
-/* 1 = com.canonical.AppMenu.Registrar has an owner, 0 = no owner, -1 = error / unknown */
-int ztray_linux_appmenu_registrar_has_owner(void) {
-    DBusError err;
-    dbus_error_init(&err);
-    DBusConnection *conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
-    if (!conn) {
-        dbus_error_free(&err);
-        return -1;
+static void appmenu_registrar_query_notify(DBusPendingCall *pending, void *user_data) {
+    (void)user_data;
+    DBusMessage *reply = dbus_pending_call_steal_reply(pending);
+    dbus_pending_call_unref(pending);
+    g_appmenu_registrar_query_in_flight = 0;
+    atomic_store(&g_appmenu_registrar_has_owner, -1);
+
+    if (!reply) return;
+    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_METHOD_RETURN && dbus_message_has_signature(reply, "b")) {
+        DBusMessageIter args;
+        if (dbus_message_iter_init(reply, &args)) {
+            dbus_bool_t has_owner = FALSE;
+            dbus_message_iter_get_basic(&args, &has_owner);
+            atomic_store(&g_appmenu_registrar_has_owner, has_owner ? 1 : 0);
+        }
     }
+    dbus_message_unref(reply);
+}
+
+static void query_appmenu_registrar_owner(void) {
+    if (g_appmenu_registrar_query_in_flight || atomic_load(&g_appmenu_registrar_has_owner) != -1) return;
+    if (ztray_linux_dbus_init() == 0) return;
 
     DBusMessage *msg = dbus_message_new_method_call(
         "org.freedesktop.DBus",
         "/org/freedesktop/DBus",
         "org.freedesktop.DBus",
         "NameHasOwner");
-    if (!msg) {
-        dbus_connection_unref(conn);
-        return -1;
-    }
+    if (!msg) return;
 
     const char *registrar = "com.canonical.AppMenu.Registrar";
     if (!dbus_message_append_args(msg, DBUS_TYPE_STRING, &registrar, DBUS_TYPE_INVALID)) {
         dbus_message_unref(msg);
-        dbus_connection_unref(conn);
-        return -1;
+        return;
     }
 
-    DBusMessage *reply = dbus_connection_send_with_reply_and_block(conn, msg, 5000, &err);
+    DBusPendingCall *pending = NULL;
+    if (!dbus_connection_send_with_reply(g_conn, msg, &pending, -1)) {
+        dbus_message_unref(msg);
+        return;
+    }
     dbus_message_unref(msg);
-    if (!reply) {
-        dbus_error_free(&err);
-        dbus_connection_unref(conn);
-        return -1;
+    if (!pending) return;
+    if (!dbus_pending_call_set_notify(pending, appmenu_registrar_query_notify, NULL, NULL)) {
+        dbus_pending_call_cancel(pending);
+        dbus_pending_call_unref(pending);
+        return;
     }
+    g_appmenu_registrar_query_in_flight = 1;
+    dbus_connection_flush(g_conn);
+}
 
-    if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
-        dbus_message_unref(reply);
-        dbus_connection_unref(conn);
-        return -1;
-    }
-
-    DBusMessageIter args;
-    if (!dbus_message_iter_init(reply, &args)) {
-        dbus_message_unref(reply);
-        dbus_connection_unref(conn);
-        return -1;
-    }
-
-    if (dbus_message_iter_get_arg_type(&args) != DBUS_TYPE_BOOLEAN) {
-        dbus_message_unref(reply);
-        dbus_connection_unref(conn);
-        return -1;
-    }
-
-    dbus_bool_t has_owner = FALSE;
-    dbus_message_iter_get_basic(&args, &has_owner);
-
-    dbus_message_unref(reply);
-    dbus_connection_unref(conn);
-    return has_owner ? 1 : 0;
+/* 1 = com.canonical.AppMenu.Registrar has an owner, 0 = no owner, -1 = query pending or unavailable */
+int ztray_linux_appmenu_registrar_has_owner(void) {
+    query_appmenu_registrar_owner();
+    return atomic_load(&g_appmenu_registrar_has_owner);
 }
 
 int ztray_linux_dbus_init(void) {
@@ -596,6 +595,8 @@ void ztray_linux_dbus_shutdown(void) {
     dbus_connection_remove_filter(g_conn, filter_message, NULL);
     dbus_connection_unref(g_conn);
     g_conn = NULL;
+    g_appmenu_registrar_query_in_flight = 0;
+    atomic_store(&g_appmenu_registrar_has_owner, -1);
     free_menubar_items();
     g_menubar_revision = 0;
 }
