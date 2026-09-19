@@ -96,7 +96,9 @@ On Linux, native menus require a session D-Bus and an AppMenu registrar. The com
 
 ---
 
-## Build
+## Supported targets
+
+The compile CI matrix covers Linux x86_64 and aarch64, plus Windows x86_64 and ARM64. Native CI runs on current macOS, Windows, and Linux runners. Linux native builds require `libdbus-1-dev`; desktop-visible menu, tray, and compositor behavior still requires smoke testing on the target environment.
 
 ```sh
 zig fetch        # resolve lazy deps (dvui, wio) for examples
