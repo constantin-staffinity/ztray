@@ -140,7 +140,7 @@ bool ZTrayMacOSEndMenu(void) {
     if (menuItem == nil) return false;
 
     menuItem.submenu = ztray_pending_menu;
-    NSUInteger index = MAX((NSUInteger)1, ztray_pending_main_menu.numberOfItems);
+    NSUInteger index = MAX((NSUInteger)1, (NSUInteger)ztray_pending_main_menu.numberOfItems);
     NSMenuItem *windowItem = [ztray_pending_main_menu itemWithTitle:@"Window"];
     if (windowItem != nil) index = [ztray_pending_main_menu indexOfItem:windowItem];
     [ztray_pending_main_menu insertItem:menuItem atIndex:index];
