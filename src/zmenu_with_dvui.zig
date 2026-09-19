@@ -47,7 +47,7 @@ pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: MenuBar, options:
 
     if (g_use_dvui) {
         try dvui_menu_impl.installMainMenu(allocator, menu_bar);
-        dvui_menu_impl.syncMenuShortcuts(dvui.currentWindow()) catch {};
+        try dvui_menu_impl.syncMenuShortcuts(dvui.currentWindow());
     } else {
         try zc.installMainMenu(allocator, menu_bar, .{ .windows_hwnd = options.windows_hwnd });
     }
