@@ -50,7 +50,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 ## P2 — documentation and developer experience
 
 - [ ] **Expand public platform documentation.** Lifecycle, event loop, thread-affinity, action semantics, Linux caveats, and zwindow support matrix were documented in `54edcd8` and `e5eaa33`; add explicit OS/architecture support policy and ownership details. (`README.md:70-98`)
-- [ ] **Document Linux desktop requirements and troubleshooting.** Session D-Bus, AppMenu registrar, icon theme, and DVUI fallback behavior are documented in `e5eaa33`; add StatusNotifier watcher troubleshooting. (`README.md:94-98`)
+- [x] **Document Linux desktop requirements and troubleshooting.** Completed in `e5eaa33` and `6080a54`: session D-Bus, AppMenu registrar, StatusNotifier watcher, icon theme, and DVUI fallback behavior are documented. (`README.md:96-100`)
 - [x] **Document lifecycle/error recovery.** Completed in `e5eaa33`: covers initialization constraints, polling/pumping, shutdown, and reinstallation behavior. (`README.md:84-98`)
 - [x] **Publish a zwindow support matrix.** Completed in `54edcd8`. (`README.md:70-78`)
 - [ ] **Add API documentation for ownership and input limits.** Thread affinity, action IDs, and Linux item maximum are documented in `e5eaa33`; add retained/copied input lifetimes and PNG size limit. (`README.md:84-98`)
