@@ -51,6 +51,7 @@ pub fn installTrayIcon(allocator: std.mem.Allocator, options: TrayIconOptions) I
 }
 
 pub fn setTrayMenu(allocator: std.mem.Allocator, menu: TrayMenu) SetTrayMenuError!void {
+    try zmenu.validateMenu(menu);
     switch (builtin.os.tag) {
         .macos => return macos.setTrayMenu(allocator, menu),
         .windows => return winSetTrayMenu(allocator, menu),

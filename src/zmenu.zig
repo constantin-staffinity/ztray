@@ -26,6 +26,8 @@ pub const MenuBar = types.MenuBar;
 pub const modifierMask = types.modifierMask;
 pub const formatWindowsShortcut = types.formatWindowsShortcut;
 pub const formatShortcutMenuLabel = types.formatShortcutMenuLabel;
+pub const validateMenu = types.validateMenu;
+pub const validateMenuBar = types.validateMenuBar;
 
 pub const MenuBarOptions = struct {
     /// Windows only: top-level HWND for the menu bar. Required on Windows; ignored elsewhere.
@@ -54,6 +56,7 @@ pub fn pumpEvents() void {
 
 /// Installs the native menu bar. On Windows set `options.windows_hwnd` to the top-level window handle.
 pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: MenuBar, options: MenuBarOptions) InstallMainMenuError!void {
+    try types.validateMenuBar(menu_bar);
     switch (builtin.os.tag) {
         .macos => return macos.installMainMenu(allocator, menu_bar),
         .windows => {

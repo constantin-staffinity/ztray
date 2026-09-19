@@ -17,6 +17,8 @@ pub const MenuBar = zc.MenuBar;
 pub const modifierMask = zc.modifierMask;
 pub const formatWindowsShortcut = zc.formatWindowsShortcut;
 pub const formatShortcutMenuLabel = zc.formatShortcutMenuLabel;
+pub const validateMenu = zc.validateMenu;
+pub const validateMenuBar = zc.validateMenuBar;
 
 pub const InstallMainMenuError = zc.InstallMainMenuError;
 pub const pumpEvents = zc.pumpEvents;
@@ -39,6 +41,7 @@ const dvui_menu_impl = @import("zmenu_dvui.zig");
 /// Installs the menu bar. Decides native vs. DVUI internally based on `options.force_dvui` and
 /// Linux AppMenu availability. Call `drawMenuBar` / `pollAction` / `shutdownMenu` without branching.
 pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: MenuBar, options: MenuBarOptions) InstallMainMenuError!void {
+    try zc.validateMenuBar(menu_bar);
     g_use_dvui = options.force_dvui or
         (builtin.os.tag == .linux and zc.appMenuRegistrarHasOwner() == false);
 

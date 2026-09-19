@@ -97,6 +97,19 @@ pub const MenuBar = struct {
     menus: []const Menu,
 };
 
+pub fn validateMenu(menu: Menu) error{ActionIdOutOfRange}!void {
+    for (menu.items) |item| {
+        switch (item) {
+            .separator => {},
+            .action => |action| if (action.action_id < 0) return error.ActionIdOutOfRange,
+        }
+    }
+}
+
+pub fn validateMenuBar(menu_bar: MenuBar) error{ActionIdOutOfRange}!void {
+    for (menu_bar.menus) |menu| try validateMenu(menu);
+}
+
 /// Bitmask of active modifiers for ObjC `keyEquivalentModifierMask` and Windows accelerator formatting.
 pub fn modifierMask(shortcut: Shortcut) u32 {
     var mask: u32 = 0;
@@ -132,6 +145,22 @@ pub fn formatShortcutMenuLabel(allocator: std.mem.Allocator, shortcut: Shortcut)
     if (shortcut.super) try out.appendSlice(allocator, "Cmd+");
     try out.append(allocator, shortcut.key.displayAscii());
     return try out.toOwnedSlice(allocator);
+}
+
+test "validateMenu rejects negative action IDs" {
+    const menu: Menu = .{
+        .title = "File",
+        .items = &.{.{ .action = .{ .title = "Quit", .action_id = -1 } }},
+    };
+    try std.testing.expectError(error.ActionIdOutOfRange, validateMenu(menu));
+}
+
+test "validateMenu accepts non-negative action IDs" {
+    const menu: Menu = .{
+        .title = "File",
+        .items = &.{.{ .action = .{ .title = "Quit", .action_id = 0 } }},
+    };
+    try validateMenu(menu);
 }
 
 test "modifierMask empty" {
