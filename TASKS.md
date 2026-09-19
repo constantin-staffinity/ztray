@@ -35,7 +35,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 - [x] **Do not silently discard DVUI shortcut synchronization failures.** Completed in `2e6cd98`: initial shortcut synchronization errors now propagate through `InstallMainMenuError`. (`src/zmenu_with_dvui.zig:43-53`, `src/zmenu.zig:35-44`)
 - [x] **Remove or explicitly expose DVUI’s 128-shortcut limit.** Completed in `d576128`: shortcut IDs use allocator-backed storage owned by the menu arena. (`src/zmenu_dvui.zig:16-18`, `src/zmenu_dvui.zig:114-165`)
 - [x] **Resolve zwindow option no-ops.** Completed documentation in `54edcd8`: README support matrix identifies platform-specific supported and ignored `FrameChrome` fields. Implementing additional platform fields remains a future enhancement. (`README.md:70-78`)
-- [ ] **Fix/document Wayland resource lifetime limits.** **Verified.** One display is supported, the registry/dynamic library are process-lifetime, and a 16-entry blur cache deliberately leaks when full. Provide deinitialization and growable storage, or make limits explicit and fail safely. (`src/window_linux_wayland.zig:115-130`, `src/window_linux_wayland.zig:201-208`, `src/window_linux_wayland.zig:249-252`, `src/window_linux_wayland.zig:272-282`)
+- [x] **Fix/document Wayland resource lifetime limits.** Completed in `170eb40`: blur-cache overflow releases its proxy and disables blur for that surface instead of leaking. The 16-surface cap and single-display/process-lifetime backend model are documented. (`src/window_linux_wayland.zig:115-130`, `src/window_linux_wayland.zig:272-346`, `README.md:70-78`)
 
 ## P2 — automated verification
 

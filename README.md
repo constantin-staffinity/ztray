@@ -74,7 +74,7 @@ exe.addImport("zwindow", zwindow_mod);
 | macOS | Tint | Tint opacity | Appearance hint | `.tray_compatible` or `.full_vibrancy` |
 | Windows | Fixed DWM acrylic tint | Fixed opaque acrylic | Fixed dark DWM path | Ignored |
 | Linux X11 | Ignored | `_NET_WM_WINDOW_OPACITY` | Ignored | KWin blur region for `.full_vibrancy` when available |
-| Linux Wayland | Ignored | Opaque region is cleared; compositor decides blending | Ignored | KWin blur protocol for `.full_vibrancy` when available |
+| Linux Wayland | Ignored | Opaque region is cleared; compositor decides blending | Ignored | KWin blur protocol for `.full_vibrancy` when available; up to 16 simultaneous blur surfaces |
 
 Pass `-Dzwindow_unix_backends=x11,wayland` (default: both). Wayland support `dlopen`s `libwayland-client.so.0` at runtime — no static link needed.
 
