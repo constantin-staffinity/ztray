@@ -39,6 +39,7 @@ pub const MenuBarOptions = struct {
 pub const InstallMainMenuError = error{
     OutOfMemory,
     MenuInstallFailed,
+    MenuAlreadyInstalled,
     ActionIdOutOfRange,
     DBusUnavailable,
     MissingWindowsHwnd,
@@ -59,6 +60,7 @@ pub fn pumpEvents() void {
 }
 
 /// Installs the native menu bar. On Windows set `options.windows_hwnd` to the top-level window handle.
+/// A native menubar is process-lifetime and may be installed only once; later calls return `MenuAlreadyInstalled`.
 pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: MenuBar, options: MenuBarOptions) InstallMainMenuError!void {
     try types.validateMenuBar(menu_bar);
     switch (builtin.os.tag) {

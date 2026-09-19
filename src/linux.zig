@@ -109,8 +109,8 @@ fn appendMenuAsChildOf(
     }
 }
 
-pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: types.MenuBar) error{ DBusUnavailable, OutOfMemory, ActionIdOutOfRange, MenuTooLarge }!void {
-    if (menu_installed.load(.acquire)) return;
+pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: types.MenuBar) error{ DBusUnavailable, OutOfMemory, ActionIdOutOfRange, MenuAlreadyInstalled, MenuTooLarge }!void {
+    if (menu_installed.load(.acquire)) return error.MenuAlreadyInstalled;
 
     var flat: std.ArrayList(LinuxItemC) = .empty;
     defer {

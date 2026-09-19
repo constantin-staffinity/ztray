@@ -30,6 +30,7 @@ extern fn ZTrayMacOSTrayPollAction() c_int;
 extern fn ZTrayMacOSTrayShutdown() void;
 extern fn ZTrayMacOSPumpEventsTimeoutMs(ms: c_uint) void;
 
+var macos_menu_installed: std.atomic.Value(bool) = .init(false);
 var macos_tray_active: std.atomic.Value(bool) = .init(false);
 
 const AddItemFn = *const fn ([*:0]const u8, c_int, [*:0]const u8, u32, bool) callconv(.c) bool;
@@ -66,7 +67,9 @@ fn addItemsToTarget(
     }
 }
 
-pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: types.MenuBar) error{ MenuInstallFailed, OutOfMemory }!void {
+pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: types.MenuBar) error{ MenuAlreadyInstalled, MenuInstallFailed, OutOfMemory }!void {
+    if (macos_menu_installed.swap(true, .acq_rel)) return error.MenuAlreadyInstalled;
+    errdefer _ = macos_menu_installed.store(false, .release);
     if (!ZTrayMacOSBeginMainMenu()) return error.MenuInstallFailed;
 
     for (menu_bar.menus) |menu| {

@@ -184,8 +184,8 @@ fn appendMenuToMainMenu(allocator: std.mem.Allocator, main_menu: HMENU, menu: ty
     if (AppendMenuW(main_menu, MF_POPUP, @intFromPtr(submenu), title.ptr) == 0) return error.MenuInstallFailed;
 }
 
-pub fn installMainMenu(allocator: std.mem.Allocator, hwnd: HWND, menu_bar: types.MenuBar) error{ OutOfMemory, MenuInstallFailed, ActionIdOutOfRange, InvalidWtf8 }!void {
-    if (menu_installed.swap(true, .acq_rel)) return error.MenuInstallFailed;
+pub fn installMainMenu(allocator: std.mem.Allocator, hwnd: HWND, menu_bar: types.MenuBar) error{ OutOfMemory, MenuAlreadyInstalled, MenuInstallFailed, ActionIdOutOfRange, InvalidWtf8 }!void {
+    if (menu_installed.swap(true, .acq_rel)) return error.MenuAlreadyInstalled;
     errdefer _ = menu_installed.store(false, .release);
     if (hwnd == null) return error.MenuInstallFailed;
 
