@@ -33,6 +33,10 @@ jobs:
         shell: bash
         run: test -z "$(zig fmt --check build.zig src examples)"
 
+      - name: Check Linux native C sources
+        if: runner.os == 'Linux'
+        run: cc -Wall -Wextra -Werror -fsyntax-only $(pkg-config --cflags dbus-1) src/linux_dbus_menu.c src/linux_tray_png.c
+
       - name: Run tests
         run: zig build test
 
