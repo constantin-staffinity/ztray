@@ -25,7 +25,7 @@ pub const TrayIconOptions = struct {
 };
 
 pub const InstallTrayIconError = error{ TrayInstallFailed, TrayAlreadyInstalled, OutOfMemory, InvalidWtf8 };
-pub const SetTrayMenuError = error{ OutOfMemory, MenuInstallFailed, ActionIdOutOfRange, DBusUnavailable, InvalidWtf8 };
+pub const SetTrayMenuError = error{ OutOfMemory, MenuInstallFailed, ActionIdOutOfRange, DBusUnavailable, InvalidWtf8, MenuTooLarge };
 
 pub fn pumpEvents() void {
     switch (builtin.os.tag) {
@@ -478,6 +478,7 @@ extern fn ztray_linux_dbus_dispatch() void;
 const FLAG_SEPARATOR: u32 = 1;
 const FLAG_SUBMENU: u32 = 2;
 const FLAG_DISABLED: u32 = 4;
+const linux_max_menu_items = 512;
 
 var linux_tray_active: std.atomic.Value(bool) = .init(false);
 
@@ -501,18 +502,22 @@ fn linuxSetTrayMenu(allocator: std.mem.Allocator, menu: TrayMenu) SetTrayMenuErr
     defer { for (flat.items) |it| allocator.free(std.mem.span(it.label)); flat.deinit(allocator); }
 
     var next_id: i32 = 1;
+    if (flat.items.len >= linux_max_menu_items) return error.MenuTooLarge;
     try flat.append(allocator, .{ .id = 0, .parent_id = -1, .action_id = -1, .flags = FLAG_SUBMENU, .label = (try allocator.dupeZ(u8, "")).ptr });
 
     const menu_id = next_id; next_id += 1;
+    if (flat.items.len >= linux_max_menu_items) return error.MenuTooLarge;
     try flat.append(allocator, .{ .id = menu_id, .parent_id = 0, .action_id = -1, .flags = FLAG_SUBMENU, .label = (try allocator.dupeZ(u8, menu.title)).ptr });
     for (menu.items) |item| {
         switch (item) {
             .separator => {
+                if (flat.items.len >= linux_max_menu_items) return error.MenuTooLarge;
                 const sid = next_id; next_id += 1;
                 try flat.append(allocator, .{ .id = sid, .parent_id = menu_id, .action_id = -1, .flags = FLAG_SEPARATOR, .label = (try allocator.dupeZ(u8, "")).ptr });
             },
             .action => |a| {
                 if (a.action_id < 0) return error.ActionIdOutOfRange;
+                if (flat.items.len >= linux_max_menu_items) return error.MenuTooLarge;
                 const aid = next_id; next_id += 1;
                 var fl: u32 = 0;
                 if (!a.enabled) fl |= FLAG_DISABLED;

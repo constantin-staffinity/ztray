@@ -26,6 +26,7 @@ extern fn ztray_linux_tray_take_pending() c_int;
 const FLAG_SEPARATOR: u32 = 1;
 const FLAG_SUBMENU: u32 = 2;
 const FLAG_DISABLED: u32 = 4;
+const max_menu_items = 512;
 
 var menu_installed: std.atomic.Value(bool) = .init(false);
 var tray_session_active: std.atomic.Value(bool) = .init(false);
@@ -44,7 +45,8 @@ fn freeFlatLabels(allocator: std.mem.Allocator, flat: *std.ArrayList(LinuxItemC)
 }
 
 /// Appends the synthetic DBusMenu root (id 0) and sets `next_id` to 1.
-fn appendDbusMenuRoot(allocator: std.mem.Allocator, flat: *std.ArrayList(LinuxItemC), next_id: *i32) error{OutOfMemory}!void {
+fn appendDbusMenuRoot(allocator: std.mem.Allocator, flat: *std.ArrayList(LinuxItemC), next_id: *i32) error{ OutOfMemory, MenuTooLarge }!void {
+    if (flat.items.len >= max_menu_items) return error.MenuTooLarge;
     try flat.append(allocator, .{
         .id = 0,
         .parent_id = -1,
@@ -62,7 +64,8 @@ fn appendMenuAsChildOf(
     parent_id: i32,
     menu: types.Menu,
     next_id: *i32,
-) error{ OutOfMemory, ActionIdOutOfRange }!void {
+) error{ OutOfMemory, ActionIdOutOfRange, MenuTooLarge }!void {
+    if (flat.items.len >= max_menu_items) return error.MenuTooLarge;
     const menu_id = next_id.*;
     next_id.* += 1;
     try flat.append(allocator, .{
@@ -76,6 +79,7 @@ fn appendMenuAsChildOf(
     for (menu.items) |item| {
         switch (item) {
             .separator => {
+                if (flat.items.len >= max_menu_items) return error.MenuTooLarge;
                 const sid = next_id.*;
                 next_id.* += 1;
                 try flat.append(allocator, .{
@@ -88,6 +92,7 @@ fn appendMenuAsChildOf(
             },
             .action => |a| {
                 if (a.action_id < 0) return error.ActionIdOutOfRange;
+                if (flat.items.len >= max_menu_items) return error.MenuTooLarge;
                 const aid = next_id.*;
                 next_id.* += 1;
                 var fl: u32 = 0;
@@ -104,7 +109,7 @@ fn appendMenuAsChildOf(
     }
 }
 
-pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: types.MenuBar) error{ DBusUnavailable, OutOfMemory, ActionIdOutOfRange }!void {
+pub fn installMainMenu(allocator: std.mem.Allocator, menu_bar: types.MenuBar) error{ DBusUnavailable, OutOfMemory, ActionIdOutOfRange, MenuTooLarge }!void {
     if (menu_installed.load(.acquire)) return;
 
     var flat: std.ArrayList(LinuxItemC) = .empty;
@@ -152,7 +157,7 @@ pub fn installTrayIcon(allocator: std.mem.Allocator, tooltip: []const u8, icon_n
 }
 
 /// Same error cases as the public `setTrayMenu` on Linux (`InvalidWtf8` does not occur here).
-pub fn setTrayMenu(allocator: std.mem.Allocator, menu: types.Menu) error{ OutOfMemory, MenuInstallFailed, ActionIdOutOfRange, DBusUnavailable }!void {
+pub fn setTrayMenu(allocator: std.mem.Allocator, menu: types.Menu) error{ OutOfMemory, MenuInstallFailed, ActionIdOutOfRange, DBusUnavailable, MenuTooLarge }!void {
     if (!tray_session_active.load(.acquire)) return error.MenuInstallFailed;
 
     var flat: std.ArrayList(LinuxItemC) = .empty;

@@ -40,6 +40,7 @@ pub const InstallMainMenuError = error{
     ActionIdOutOfRange,
     DBusUnavailable,
     MissingWindowsHwnd,
+    MenuTooLarge,
     NoSpaceLeft,
     UnsupportedPlatform,
     InvalidWtf8,
