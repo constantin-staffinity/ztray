@@ -8,10 +8,18 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../vendor/stb_image.h"
 
+#define ZTRAY_MAX_ICON_DIMENSION 1024
+#define ZTRAY_MAX_ICON_BYTES (4u * 1024u * 1024u)
+
 void *ztray_win32_icon_from_png(const unsigned char *data, int len) {
     int w = 0, h = 0, ch = 0;
+    if (data == NULL || len <= 0 || !stbi_info_from_memory(data, len, &w, &h, &ch) ||
+        w <= 0 || h <= 0 || w > ZTRAY_MAX_ICON_DIMENSION || h > ZTRAY_MAX_ICON_DIMENSION ||
+        (size_t)w * (size_t)h > ZTRAY_MAX_ICON_BYTES / 4u)
+        return NULL;
+
     unsigned char *rgba = stbi_load_from_memory(data, len, &w, &h, &ch, 4);
-    if (rgba == NULL || w <= 0 || h <= 0)
+    if (rgba == NULL)
         return NULL;
 
     BITMAPINFOHEADER bi;
