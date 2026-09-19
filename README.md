@@ -20,24 +20,39 @@ An optional **in-app** DVUI menu bar is available via `ztray.dvui_menu` when you
 
 ## Setup
 
-Add a path (or fetched) dependency, then `addImport("ztray", …)` with matching `target` / `optimize`.
+Add a path (or fetched) dependency. Import its build API with `@import("ztray")`, then use matching `target` / `optimize` values.
 
 ### Native menus / tray only
 
 ```zig
-const ztray_mod = createZtrayModule(b, target, optimize);
+const ztray = @import("ztray");
+
+const zmenu_mod = ztray.createZmenuModule(b, target, optimize);
+const ztray_mod = ztray.createZtrayModule(b, target, optimize, zmenu_mod);
+exe.addImport("zmenu", zmenu_mod);
 exe.addImport("ztray", ztray_mod);
 ```
 
 ### Native + DVUI in-app menu bar
 
 ```zig
-const ztray_mod  = createZtrayModule(b, target, optimize);
-const ztray_dvui = createZtrayDvuiModule(b, target, optimize, ztray_mod, dvui_mod, sdl_mod);
-exe.addImport("ztray", ztray_dvui);
+const ztray = @import("ztray");
+
+const zmenu_mod = ztray.createZmenuModule(b, target, optimize);
+const ztray_mod = ztray.createZtrayModule(b, target, optimize, zmenu_mod);
+const zmenu_dvui = ztray.createZmenuDvuiModule(
+    b,
+    target,
+    optimize,
+    zmenu_mod,
+    dvui_mod,
+    sdl_mod,
+);
+exe.addImport("zmenu", zmenu_dvui);
+exe.addImport("ztray", ztray_mod);
 ```
 
-Use `ztray.dvui_menu` for in-app calls. Use `ztray.installMainMenuForSdlDvuiWindow` to get the native `HWND` from SDL automatically on Windows.
+Use `zmenu.dvui_menu` for in-app calls. Use `zmenu.installMainMenuForSdlDvuiWindow` to get the native `HWND` from SDL automatically on Windows.
 
 ### Optional window frame chrome (`zwindow`)
 
