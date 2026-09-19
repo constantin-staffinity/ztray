@@ -60,7 +60,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 - [ ] **Create an initial release process.** Changelog and release checklist completed in `254b422`; choose an initial package version, publish compatibility policy, and create annotated release tags. (`CHANGELOG.md`, `RELEASE.md`, `build.zig.zon:2-5`)
 - [x] **Add contribution and security policies.** Completed in `8e5fdab`, `450a48f`, `dfc41b6`, and `77a7161`: contribution/security policies, bug/PR templates, and maintenance support policy are present. (`CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md`, `.github/ISSUE_TEMPLATE/bug_report.md`, `.github/pull_request_template.md`)
 - [ ] **Review third-party attribution and provenance.** Third-party notices completed in `44e280a`; maintain the release-time license/dependency review and add SBOM/provenance generation. (`THIRD_PARTY_NOTICES.md`, `build.zig.zon:6-21`, `LICENSE:1-21`)
-- [ ] **Add dependency maintenance controls.** Keep pins, but add automated update review, reproducibility/cache verification, and vulnerability monitoring where applicable.
+- [ ] **Add dependency maintenance controls.** GitHub Actions update review completed in `745ceed`; retain commit pins and add reproducibility/cache verification plus vulnerability monitoring where applicable. (`.github/dependabot.yml`, `build.zig.zon:6-21`)
 
 ## P3 — suggested product and maintainability improvements
 
