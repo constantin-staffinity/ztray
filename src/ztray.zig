@@ -60,6 +60,10 @@ pub fn setTrayMenu(allocator: std.mem.Allocator, menu: TrayMenu) SetTrayMenuErro
     }
 }
 
+/// Returns and clears the last tray action id, or null if none.
+///
+/// The tray retains one pending action. If multiple actions occur before polling,
+/// the latest action replaces earlier unpolled actions.
 pub fn pollTrayActionId() ?ActionId {
     const id: c_int = switch (builtin.os.tag) {
         .macos => macos.pollTrayActionId(),

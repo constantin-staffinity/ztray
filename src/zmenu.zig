@@ -79,6 +79,9 @@ pub fn appMenuRegistrarHasOwner() ?bool {
 }
 
 /// Returns and clears the last native menubar action id, or null if none.
+///
+/// Each menu source retains one pending action. If multiple actions occur before polling,
+/// the latest action replaces earlier unpolled actions.
 pub fn pollActionId() ?ActionId {
     const id = switch (builtin.os.tag) {
         .macos => macos.pollActionId(),
