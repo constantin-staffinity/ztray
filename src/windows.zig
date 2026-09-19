@@ -23,6 +23,7 @@ const MF_SEPARATOR: UINT = 0x0800;
 const MF_GRAYED: UINT = 0x0001;
 const WM_COMMAND: UINT = 0x0111;
 const WM_DESTROY: UINT = 0x0002;
+const WM_NCDESTROY: UINT = 0x0082;
 const WM_USER: UINT = 0x0400;
 const WM_RBUTTONUP: UINT = 0x0205;
 const WM_CONTEXTMENU: UINT = 0x007B;
@@ -65,6 +66,8 @@ const tray_subclass_id: UINT_PTR = 0x5A545254; // "ZTRT"
 
 var pending_action_id: std.atomic.Value(c_int) = .init(-1);
 var menu_installed: std.atomic.Value(bool) = .init(false);
+var menu_hwnd: HWND = null;
+var menu_handle: HMENU = null;
 
 var tray_pending_action_id: std.atomic.Value(c_int) = .init(-1);
 var tray_icon_installed: std.atomic.Value(bool) = .init(false);
@@ -203,6 +206,8 @@ pub fn installMainMenu(allocator: std.mem.Allocator, hwnd: HWND, menu_bar: types
     attached = true;
     _ = DrawMenuBar(hwnd);
     if (SetWindowSubclass(hwnd, ztraySubclassProc, subclass_id, 0) == 0) return error.MenuInstallFailed;
+    menu_hwnd = hwnd;
+    menu_handle = main_menu;
 }
 
 pub fn pollActionId() c_int {
@@ -489,6 +494,14 @@ fn ztraySubclassProc(
             pending_action_id.store(id, .release);
             return 0;
         }
+    }
+
+    if (uMsg == WM_NCDESTROY and menu_hwnd == hWnd) {
+        menu_hwnd = null;
+        if (menu_handle) |menu| _ = DestroyMenu(menu);
+        menu_handle = null;
+        pending_action_id.store(-1, .release);
+        _ = menu_installed.store(false, .release);
     }
 
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
