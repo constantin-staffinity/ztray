@@ -608,21 +608,37 @@ typedef struct {
     const char *label;
 } ZTrayLinuxItem;
 
-int ztray_linux_dbus_set_items(const ZTrayLinuxItem *items, int n) {
-    if (n < 0 || n > ZTRAY_MAX_ITEMS) return 0;
-    free_menubar_items();
+static void free_items(ZTrayItem *items, int n) {
     for (int i = 0; i < n; i++) {
-        g_menubar_items[i].id = items[i].id;
-        g_menubar_items[i].parent_id = items[i].parent_id;
-        g_menubar_items[i].action_id = items[i].action_id;
-        g_menubar_items[i].flags = items[i].flags;
-        g_menubar_items[i].label = items[i].label ? strdup(items[i].label) : strdup("");
-        if (!g_menubar_items[i].label) {
-            free_menubar_items();
+        free(items[i].label);
+        items[i].label = NULL;
+    }
+}
+
+static int replace_items(ZTrayItem *target, int *target_n, const ZTrayLinuxItem *items, int n) {
+    if (n < 0 || n > ZTRAY_MAX_ITEMS) return 0;
+
+    ZTrayItem replacement[ZTRAY_MAX_ITEMS] = {0};
+    for (int i = 0; i < n; i++) {
+        replacement[i].id = items[i].id;
+        replacement[i].parent_id = items[i].parent_id;
+        replacement[i].action_id = items[i].action_id;
+        replacement[i].flags = items[i].flags;
+        replacement[i].label = items[i].label ? strdup(items[i].label) : strdup("");
+        if (!replacement[i].label) {
+            free_items(replacement, n);
             return 0;
         }
     }
-    g_n_menubar = n;
+
+    free_items(target, *target_n);
+    memcpy(target, replacement, sizeof(replacement));
+    *target_n = n;
+    return 1;
+}
+
+int ztray_linux_dbus_set_items(const ZTrayLinuxItem *items, int n) {
+    if (!replace_items(g_menubar_items, &g_n_menubar, items, n)) return 0;
     if (g_menubar_revision == 0xFFFFFFFFu)
         g_menubar_revision = 1;
     else
@@ -632,20 +648,7 @@ int ztray_linux_dbus_set_items(const ZTrayLinuxItem *items, int n) {
 }
 
 int ztray_linux_tray_set_items(const ZTrayLinuxItem *items, int n) {
-    if (n < 0 || n > ZTRAY_MAX_ITEMS) return 0;
-    free_tray_items();
-    for (int i = 0; i < n; i++) {
-        g_tray_items[i].id = items[i].id;
-        g_tray_items[i].parent_id = items[i].parent_id;
-        g_tray_items[i].action_id = items[i].action_id;
-        g_tray_items[i].flags = items[i].flags;
-        g_tray_items[i].label = items[i].label ? strdup(items[i].label) : strdup("");
-        if (!g_tray_items[i].label) {
-            free_tray_items();
-            return 0;
-        }
-    }
-    g_n_tray = n;
+    if (!replace_items(g_tray_items, &g_n_tray, items, n)) return 0;
     if (g_tray_revision == 0xFFFFFFFFu)
         g_tray_revision = 1;
     else
