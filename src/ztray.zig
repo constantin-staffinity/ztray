@@ -371,7 +371,6 @@ fn winInstallTrayIcon(allocator: std.mem.Allocator, host_hwnd: HWND, tooltip: []
 
 fn winSetTrayMenu(allocator: std.mem.Allocator, menu: TrayMenu) SetTrayMenuError!void {
     if (win_tray_hwnd == null) return error.MenuInstallFailed;
-    if (win_tray_popup_menu) |old| { _ = DestroyMenu(old); win_tray_popup_menu = null; }
     const popup = CreatePopupMenu() orelse return error.MenuInstallFailed;
     errdefer _ = DestroyMenu(popup);
     for (menu.items) |item| {
@@ -388,7 +387,9 @@ fn winSetTrayMenu(allocator: std.mem.Allocator, menu: TrayMenu) SetTrayMenuError
             },
         }
     }
+    const old = win_tray_popup_menu;
     win_tray_popup_menu = popup;
+    if (old) |old_popup| _ = DestroyMenu(old_popup);
 }
 
 fn winItemLabel(allocator: std.mem.Allocator, action: Item.ActionItem) ![:0]u16 {
