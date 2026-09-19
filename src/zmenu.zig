@@ -5,8 +5,10 @@
 //!
 //! ## Threading and event loops
 //!
-//! Call `installMainMenu` from the main thread. On Windows pump messages via your framework loop.
-//! On Linux and macOS call [`pumpEvents`] each frame; it is safe to call from either zmenu or ztray.
+//! Call `installMainMenu`, `pollActionId`, and `pumpEvents` from the owning UI thread. The native
+//! backends share mutable process-global state and are not safe for concurrent calls. On Windows
+//! pump messages via your framework loop. On Linux and macOS call [`pumpEvents`] each frame; it is
+//! safe to call from either zmenu or ztray.
 //!
 //! ## Strings and allocators
 //!

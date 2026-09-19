@@ -2,6 +2,12 @@
 //!
 //! Types (`Item`, `Menu`, `Shortcut`, etc.) are re-exported from **zmenu** — identical types across both modules.
 //! Call [`pumpEvents`] each frame; on Linux it dispatches the shared D-Bus connection.
+//!
+//! ## Threading
+//!
+//! Call `installTrayIcon`, `setTrayMenu`, `pollTrayActionId`, `pumpEvents`, and `shutdownTray`
+//! on the owning UI thread. The native backends share mutable process-global state and are not
+//! safe for concurrent calls.
 const std = @import("std");
 const builtin = @import("builtin");
 
