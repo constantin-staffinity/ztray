@@ -44,7 +44,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 - [ ] **Add native smoke tests for macOS and Windows.** Cover AppKit/Win32 menu/tray initialization, resource teardown, and basic action dispatch on real runners.
 - [ ] **Test DVUI behavior.** Verify shortcut registration, cleanup, fallback mode selection, and capacity/error behavior.
 - [ ] **Test zwindow backends.** Add focused platform smoke harnesses for macOS, Windows, X11, and Wayland behavior and degradation paths.
-- [ ] **Expand target coverage policy.** **Verified.** Existing compile CI omits explicit macOS architectures and Windows ARM64. Publish a support matrix and test each supported target. (`build.zig:373-385`)
+- [x] **Expand target coverage policy.** Completed in `f22379a` and `e56072b`: compile CI covers Linux x86_64/aarch64 and Windows x86_64/ARM64; native CI covers current macOS, Windows, and Linux runners. (`build.zig:374-382`, `README.md:102-106`)
 - [ ] **Automate formatting and C/Objective-C analysis.** Zig formatting check completed in `3d73cc6`; add Clang warnings/static analysis and sanitizer-capable test jobs for native sources. (`.github/workflows/ci.yml:32-34`)
 
 ## P2 — documentation and developer experience
