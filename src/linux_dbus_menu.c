@@ -466,18 +466,11 @@ static int register_sni_watcher(void) {
         dbus_message_unref(msg);
         return 0;
     }
-    DBusPendingCall *pending = NULL;
-    if (!dbus_connection_send_with_reply(g_conn, msg, &pending, 3000)) {
-        dbus_message_unref(msg);
-        return 0;
-    }
+    dbus_uint32_t serial = 0;
+    dbus_bool_t sent = dbus_connection_send(g_conn, msg, &serial);
     dbus_message_unref(msg);
-    if (pending) {
-        dbus_pending_call_block(pending);
-        DBusMessage *reply = dbus_pending_call_steal_reply(pending);
-        dbus_pending_call_unref(pending);
-        if (reply) dbus_message_unref(reply);
-    }
+    if (!sent) return 0;
+    dbus_connection_flush(g_conn);
     return 1;
 }
 
