@@ -19,7 +19,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 - [x] **Support supplied PNG tray icons on Linux.** Completed in `427769a`: PNGs are decoded to ARGB, published through StatusNotifier `IconPixmap`, and announce `NewIcon`; `linux_icon_name` remains supported for Freedesktop theme lookup. Native D-Bus protocol coverage remains tracked below. (`src/linux_tray_png.c`, `src/linux_dbus_menu.c:254-324`, `src/linux_dbus_menu.c:695-745`)
 - [x] **Propagate menu shortcut metadata over D-BusMenu.** Completed in `6b5829d`: Linux publishes the D-BusMenu `shortcut` (`aas`) property; `primary` and `ctrl` map to `Control`, with Shift, Alt, and Super retained. This is menu display metadata, not a global shortcut registration. (`src/linux.zig:43-124`, `src/linux_dbus_menu.c:99-147`)
 - [x] **Replace or surface the 512-item Linux menu limit.** Completed in `cfb50e7`: Zig flattening prevalidates the 512-item backend limit and returns `MenuTooLarge`. (`src/linux.zig:29-170`, `src/ztray.zig:480-537`)
-- [ ] **Run Linux D-Bus functionality on a native runner.** **Verified.** Cross-builds select a no-op D-Bus stub, so they do not test real Linux behavior. Add isolated-session-bus tests on Linux. (`build.zig:44-51`, `src/linux_dbus_stub.c:12-35`)
+- [x] **Run Linux D-Bus functionality on a native runner.** Completed in `1813991`: CI builds the real Linux backend inside `dbus-run-session`, in addition to cross-builds that use the stub. Protocol-level assertions remain tracked below. (`.github/workflows/ci.yml:25-47`, `build.zig:44-52`)
 
 ### Lifecycle and event semantics
 
@@ -40,7 +40,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 ## P2 — automated verification
 
 - [ ] **Broaden unit coverage.** Action-ID validation unit coverage was added in `6b68084`; add tests for item flattening, 512-item handling, lifecycle/replacement state transitions, and tray/menu error paths. (`src/types.zig:147-218`, `build.zig:356-364`)
-- [ ] **Add Linux D-Bus protocol integration tests.** Exercise registrar detection, StatusNotifier registration, menu layout/property responses, malformed calls, action events, and watcher absence using an isolated session bus.
+- [ ] **Add Linux D-Bus protocol integration tests.** The real backend is built under an isolated session bus in `1813991`; add protocol assertions for registrar detection, StatusNotifier registration, menu layout/property responses, malformed calls, action events, and watcher absence.
 - [ ] **Add native smoke tests for macOS and Windows.** Cover AppKit/Win32 menu/tray initialization, resource teardown, and basic action dispatch on real runners.
 - [ ] **Test DVUI behavior.** Verify shortcut registration, cleanup, fallback mode selection, and capacity/error behavior.
 - [ ] **Test zwindow backends.** Add focused platform smoke harnesses for macOS, Windows, X11, and Wayland behavior and degradation paths.
