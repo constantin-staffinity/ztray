@@ -113,19 +113,27 @@ pub const windows = struct {
 
 const macos = if (builtin.os.tag == .macos) @import("macos.zig") else struct {
     fn installMainMenu(_: std.mem.Allocator, _: MenuBar) InstallMainMenuError!void {}
-    fn pollActionId() c_int { return -1; }
+    fn pollActionId() c_int {
+        return -1;
+    }
     fn pumpTrayEventsDarwin() void {}
 };
 
 const win = if (builtin.os.tag == .windows) @import("windows.zig") else struct {
     fn installMainMenu(_: std.mem.Allocator, _: ?*anyopaque, _: MenuBar) InstallMainMenuError!void {}
-    fn pollActionId() c_int { return -1; }
+    fn pollActionId() c_int {
+        return -1;
+    }
     fn pumpTrayMessages() void {}
 };
 
 const linux = if (builtin.os.tag == .linux) @import("linux.zig") else struct {
     fn installMainMenu(_: std.mem.Allocator, _: MenuBar) InstallMainMenuError!void {}
-    fn pollActionId() c_int { return -1; }
+    fn pollActionId() c_int {
+        return -1;
+    }
     fn pumpLinuxDBus() void {}
-    fn appMenuRegistrarHasOwner() ?bool { return null; }
+    fn appMenuRegistrarHasOwner() ?bool {
+        return null;
+    }
 };

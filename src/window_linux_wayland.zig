@@ -48,7 +48,7 @@ const OP_BLUR_RELEASE: u32 = 2;
 
 const registry_bind_types: [4]?*const WlInterface = .{ null, null, null, null };
 const registry_global_types: [3]?*const WlInterface = .{ null, null, null };
-const registry_global_remove_types: [1]?*const WlInterface = .{ null };
+const registry_global_remove_types: [1]?*const WlInterface = .{null};
 
 const registry_requests = [_]WlMessage{
     .{ .name = "bind", .signature = "usun", .types = &registry_bind_types },
@@ -67,7 +67,7 @@ const wl_registry_interface: WlInterface = .{
     .events = &registry_events,
 };
 
-const blur_set_region_types: [1]?*const WlInterface = .{ null };
+const blur_set_region_types: [1]?*const WlInterface = .{null};
 const blur_requests = [_]WlMessage{
     .{ .name = "commit", .signature = "", .types = null },
     .{ .name = "set_region", .signature = "?o", .types = &blur_set_region_types },
@@ -84,7 +84,7 @@ const org_kde_kwin_blur_interface: WlInterface = .{
 };
 
 const blur_mgr_create_types: [2]?*const WlInterface = .{ &org_kde_kwin_blur_interface, null };
-const blur_mgr_unset_types: [1]?*const WlInterface = .{ null };
+const blur_mgr_unset_types: [1]?*const WlInterface = .{null};
 const blur_mgr_requests = [_]WlMessage{
     .{ .name = "create", .signature = "no", .types = &blur_mgr_create_types },
     .{ .name = "unset", .signature = "o", .types = &blur_mgr_unset_types },

@@ -61,7 +61,9 @@ pub fn AppFrame() !dvui.App.Result {
                 hello_count += 1;
                 std.log.info("Hello from zmenu (#{d})", .{hello_count});
             },
-            .toggle_demo => { dvui.Examples.show_demo_window = !dvui.Examples.show_demo_window; },
+            .toggle_demo => {
+                dvui.Examples.show_demo_window = !dvui.Examples.show_demo_window;
+            },
             .quit_hint => std.log.info("Use the window close button or platform shortcut to quit.", .{}),
         }
     }

@@ -7,7 +7,9 @@ const zmenu = @import("zmenu");
 
 pub const std_options = std.Options{ .log_level = .info, .logFn = wio.logFn };
 
-comptime { _ = wio; }
+comptime {
+    _ = wio;
+}
 
 var window: wio.Window = undefined;
 
@@ -52,7 +54,11 @@ pub fn main(init: std.process.Init) !void {
 fn loop() !bool {
     while (window.getEvent()) |event| {
         switch (event) {
-            .close => { window.destroy(); wio.deinit(); return false; },
+            .close => {
+                window.destroy();
+                wio.deinit();
+                return false;
+            },
             else => {},
         }
     }

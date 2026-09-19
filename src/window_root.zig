@@ -27,9 +27,13 @@ const impl = switch (builtin.os.tag) {
 };
 
 const win_impl = if (builtin.os.tag == .windows) @import("window_windows.zig") else struct {
-    fn titleBarButtonAt(_: *anyopaque, _: i32, _: i32) ?TitleBarButton { return null; }
+    fn titleBarButtonAt(_: *anyopaque, _: i32, _: i32) ?TitleBarButton {
+        return null;
+    }
     fn performTitleBarButton(_: *anyopaque, _: TitleBarButton) void {}
-    fn titleBarButtonWidth() i32 { return 0; }
+    fn titleBarButtonWidth() i32 {
+        return 0;
+    }
 };
 
 /// Deprecated: use [`setFrameChrome`] with `.{}` defaults instead.

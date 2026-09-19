@@ -27,8 +27,12 @@ pub const ZwindowUnixBackends = enum {
         return .wayland;
     }
 
-    pub fn x11Enabled(self: ZwindowUnixBackends) bool { return self != .wayland; }
-    pub fn waylandEnabled(self: ZwindowUnixBackends) bool { return self != .x11; }
+    pub fn x11Enabled(self: ZwindowUnixBackends) bool {
+        return self != .wayland;
+    }
+    pub fn waylandEnabled(self: ZwindowUnixBackends) bool {
+        return self != .x11;
+    }
 };
 
 fn linkNativeMenuBar(mod: *std.Build.Module, b: *std.Build, target: std.Build.ResolvedTarget) void {
@@ -407,12 +411,10 @@ fn addZtrayCiExamplesForTarget(
     const os_tag = @tagName(resolved.result.os.tag);
     const arch_tag = @tagName(resolved.result.cpu.arch);
 
-    ci_step.dependOn(&addDvuiExampleExe(b, zmenu_dvui_mod, example_opts_mod, d, resolved, optimize,
-        b.fmt("zmenu-dvui-{s}-{s}", .{ arch_tag, os_tag })).step);
+    ci_step.dependOn(&addDvuiExampleExe(b, zmenu_dvui_mod, example_opts_mod, d, resolved, optimize, b.fmt("zmenu-dvui-{s}-{s}", .{ arch_tag, os_tag })).step);
 
     {
-        const exe = addWioMenuExe(b, zmenu_mod, wio_mod, resolved, optimize,
-            b.fmt("zmenu-wio-{s}-{s}", .{ arch_tag, os_tag }));
+        const exe = addWioMenuExe(b, zmenu_mod, wio_mod, resolved, optimize, b.fmt("zmenu-wio-{s}-{s}", .{ arch_tag, os_tag }));
         linkLinuxDynamic(exe, b.graph.host.result.os.tag, resolved.result.os.tag);
         ci_step.dependOn(&exe.step);
     }
@@ -420,29 +422,25 @@ fn addZtrayCiExamplesForTarget(
     if (resolved.result.os.tag == .linux) {
         inline for (std.enums.values(ZwindowUnixBackends)) |zwb| {
             const zwindow_ci = createZwindowModule(b, resolved, optimize, zwb);
-            const exe = addWioTrayExe(b, zmenu_mod, ztray_mod, zwindow_ci, wio_mod, resolved, optimize,
-                b.fmt("ztray-wio-tray-{s}-{s}-zw-{s}", .{ arch_tag, os_tag, @tagName(zwb) }));
+            const exe = addWioTrayExe(b, zmenu_mod, ztray_mod, zwindow_ci, wio_mod, resolved, optimize, b.fmt("ztray-wio-tray-{s}-{s}-zw-{s}", .{ arch_tag, os_tag, @tagName(zwb) }));
             linkLinuxDynamic(exe, b.graph.host.result.os.tag, resolved.result.os.tag);
             ci_step.dependOn(&exe.step);
         }
     } else {
         const zwindow_mod = createZwindowModule(b, resolved, optimize, .both);
-        const exe = addWioTrayExe(b, zmenu_mod, ztray_mod, zwindow_mod, wio_mod, resolved, optimize,
-            b.fmt("ztray-wio-tray-{s}-{s}", .{ arch_tag, os_tag }));
+        const exe = addWioTrayExe(b, zmenu_mod, ztray_mod, zwindow_mod, wio_mod, resolved, optimize, b.fmt("ztray-wio-tray-{s}-{s}", .{ arch_tag, os_tag }));
         linkLinuxDynamic(exe, b.graph.host.result.os.tag, resolved.result.os.tag);
         ci_step.dependOn(&exe.step);
     }
 
     if (resolved.result.os.tag == .macos) {
         const zwindow_mod = createZwindowModule(b, resolved, optimize, .both);
-        const exe = addWioWindowExe(b, zwindow_mod, wio_mod, resolved, optimize,
-            b.fmt("zwindow-wio-{s}-{s}", .{ arch_tag, os_tag }));
+        const exe = addWioWindowExe(b, zwindow_mod, wio_mod, resolved, optimize, b.fmt("zwindow-wio-{s}-{s}", .{ arch_tag, os_tag }));
         ci_step.dependOn(&exe.step);
     }
 
     {
-        const exe = addTrayMinimalExe(b, ztray_mod, resolved, optimize,
-            b.fmt("ztray-minimal-{s}-{s}", .{ arch_tag, os_tag }));
+        const exe = addTrayMinimalExe(b, ztray_mod, resolved, optimize, b.fmt("ztray-minimal-{s}-{s}", .{ arch_tag, os_tag }));
         linkLinuxDynamic(exe, b.graph.host.result.os.tag, resolved.result.os.tag);
         ci_step.dependOn(&exe.step);
     }

@@ -114,10 +114,10 @@ pub fn validateMenuBar(menu_bar: MenuBar) error{ActionIdOutOfRange}!void {
 pub fn modifierMask(shortcut: Shortcut) u32 {
     var mask: u32 = 0;
     if (shortcut.primary) mask |= 1 << 0;
-    if (shortcut.shift)   mask |= 1 << 1;
-    if (shortcut.alt)     mask |= 1 << 2;
-    if (shortcut.ctrl)    mask |= 1 << 3;
-    if (shortcut.super)   mask |= 1 << 4;
+    if (shortcut.shift) mask |= 1 << 1;
+    if (shortcut.alt) mask |= 1 << 2;
+    if (shortcut.ctrl) mask |= 1 << 3;
+    if (shortcut.super) mask |= 1 << 4;
     return mask;
 }
 

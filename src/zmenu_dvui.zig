@@ -194,9 +194,15 @@ pub fn pollAction(comptime T: type) ?T {
     return std.enums.fromInt(T, id);
 }
 
-fn topMenuBarItemId(menu_index: usize) usize { return 1 + menu_index; }
-fn submenuRowId(menu_index: usize, item_index: usize) usize { return 0x10_0000 + menu_index * 4096 + item_index; }
-fn submenuPopupId(menu_index: usize, slot: u2) usize { return 0x20_0000 + menu_index * 8 + @as(usize, @intCast(slot)); }
+fn topMenuBarItemId(menu_index: usize) usize {
+    return 1 + menu_index;
+}
+fn submenuRowId(menu_index: usize, item_index: usize) usize {
+    return 0x10_0000 + menu_index * 4096 + item_index;
+}
+fn submenuPopupId(menu_index: usize, slot: u2) usize {
+    return 0x20_0000 + menu_index * 8 + @as(usize, @intCast(slot));
+}
 
 /// Call every frame to render the in-app DVUI menu bar.
 pub fn drawMenuBar() !void {

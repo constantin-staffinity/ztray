@@ -9,7 +9,9 @@ const zwindow = @import("zwindow");
 
 pub const std_options = std.Options{ .log_level = .info, .logFn = wio.logFn };
 
-comptime { _ = wio; }
+comptime {
+    _ = wio;
+}
 
 extern fn NSApplicationLoad() void;
 
@@ -107,7 +109,12 @@ pub fn main(init: std.process.Init) !void {
 fn loop() !bool {
     while (window.getEvent()) |event| {
         switch (event) {
-            .close => { ztray.shutdownTray(); window.destroy(); wio.deinit(); return false; },
+            .close => {
+                ztray.shutdownTray();
+                window.destroy();
+                wio.deinit();
+                return false;
+            },
             else => {},
         }
     }
@@ -117,7 +124,12 @@ fn loop() !bool {
     if (ztray.pollTrayAction(TrayAction)) |action| {
         switch (action) {
             .hello => std.log.info("Hello from tray", .{}),
-            .quit => { ztray.shutdownTray(); window.destroy(); wio.deinit(); return false; },
+            .quit => {
+                ztray.shutdownTray();
+                window.destroy();
+                wio.deinit();
+                return false;
+            },
         }
     }
 
