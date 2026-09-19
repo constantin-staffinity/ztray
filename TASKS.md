@@ -45,7 +45,7 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 - [ ] **Test DVUI behavior.** Verify shortcut registration, cleanup, fallback mode selection, and capacity/error behavior.
 - [ ] **Test zwindow backends.** Add focused platform smoke harnesses for macOS, Windows, X11, and Wayland behavior and degradation paths.
 - [x] **Expand target coverage policy.** Completed in `f22379a` and `e56072b`: compile CI covers Linux x86_64/aarch64 and Windows x86_64/ARM64; native CI covers current macOS, Windows, and Linux runners. (`build.zig:374-382`, `README.md:102-106`)
-- [ ] **Automate formatting and C/Objective-C analysis.** Zig formatting check completed in `3d73cc6` and sources aligned in `d3e1bbd`; add Clang warnings/static analysis and sanitizer-capable test jobs for native sources. (`.github/workflows/ci.yml:32-34`)
+- [ ] **Automate formatting and C/Objective-C analysis.** Zig formatting completed in `3d73cc6`/`d3e1bbd`; Linux native C `-Wall -Wextra -Werror` syntax checking in `d103da2`; add macOS/Windows native warning checks, static analysis, and sanitizer-capable jobs. (`.github/workflows/ci.yml:32-40`)
 
 ## P2 — documentation and developer experience
 
