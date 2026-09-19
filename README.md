@@ -80,6 +80,18 @@ Pass `-Dzwindow_unix_backends=x11,wayland` (default: both). Wayland support `dlo
 
 `zwindow` is **not** re-exported from the core `ztray` module.
 
+### Lifecycle and event handling
+
+Call all zmenu, ztray, and zwindow APIs from the owning UI thread. Native backends use shared process-global state and are not safe for concurrent calls.
+
+Install a native menubar once per process. A second `zmenu.installMainMenu` call returns `error.MenuAlreadyInstalled`. Tray icons can be removed with `ztray.shutdownTray`, after which they may be installed again.
+
+Call `zmenu.pumpEvents()` or `ztray.pumpEvents()` each frame. On Windows, integrate message pumping with the framework loop; on macOS this runs a short Cocoa loop slice; on Linux it dispatches the shared session D-Bus connection.
+
+`pollActionId` and `pollTrayActionId` clear one pending action. If multiple actions occur before polling, the newest action replaces prior unpolled actions. Action IDs must be non-negative; Linux D-Bus menus support at most 512 flattened items and otherwise return `error.MenuTooLarge`.
+
+On Linux, native menus require a session D-Bus and an AppMenu registrar. The combined DVUI module uses the in-app menubar only when registrar absence is known; while asynchronous discovery is pending, it installs the native menu. Linux tray icons use `linux_icon_name`, which must be resolvable through the Freedesktop icon theme. Embedded PNG tray icons are not yet supported on Linux.
+
 ---
 
 ## Build
