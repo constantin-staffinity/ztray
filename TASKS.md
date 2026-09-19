@@ -57,8 +57,8 @@ Scope: tracked first-party source, package/build configuration, examples, docume
 
 ## P2 — release, governance, and supply chain
 
-- [ ] **Create an initial release process.** **Verified.** Package version is `0.0.0`; repository has no tags or changelog. Choose versioning policy, create changelog/release notes, tag releases, and document compatibility policy. (`build.zig.zon:2-5`)
-- [ ] **Add contribution and security policies.** **Verified.** Add `CONTRIBUTING.md`, `SECURITY.md`, issue/PR templates, maintenance/support policy, and a release checklist.
+- [ ] **Create an initial release process.** Changelog and release checklist completed in `254b422`; choose an initial package version, publish compatibility policy, and create annotated release tags. (`CHANGELOG.md`, `RELEASE.md`, `build.zig.zon:2-5`)
+- [ ] **Add contribution and security policies.** `CONTRIBUTING.md` and `SECURITY.md` completed in `8e5fdab` and `450a48f`; add issue/PR templates and a maintenance/support policy.
 - [ ] **Review third-party attribution and provenance.** **Verified review task.** Verify licenses and redistribution obligations for vendored `stb_image` and pinned dependencies; publish third-party notices and preferably an SBOM/provenance record. (`vendor/stb_image.h`, `build.zig.zon:6-21`, `LICENSE:1-21`)
 - [ ] **Add dependency maintenance controls.** Keep pins, but add automated update review, reproducibility/cache verification, and vulnerability monitoring where applicable.
 
