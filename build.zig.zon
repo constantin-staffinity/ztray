@@ -1,6 +1,6 @@
 .{
     .name = .ztray,
-    .version = "0.0.0",
+    .version = "0.1.0-dev.1",
     .fingerprint = 0x935717f8eccb911d,
     .minimum_zig_version = "0.16.0",
     .dependencies = .{

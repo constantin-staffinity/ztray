@@ -4,6 +4,8 @@ All notable changes are documented here.
 
 ## Unreleased
 
+## 0.1.0-dev.1
+
 ### Added
 
 - Linux StatusNotifier `IconPixmap` support for embedded PNG tray icons.
