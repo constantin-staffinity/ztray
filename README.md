@@ -92,7 +92,7 @@ Call `zmenu.pumpEvents()` or `ztray.pumpEvents()` each frame. On Windows, integr
 
 Menu titles, shortcut labels, tooltips, icon paths, and PNG bytes are copied or decoded during installation; callers may release them after the call returns. PNG icons on Windows and Linux are limited to 1024×1024 pixels and 4 MiB of decoded RGBA data.
 
-On Linux, native menus require a session D-Bus and an AppMenu registrar. The combined DVUI module uses the in-app menubar only when registrar absence is known; while asynchronous discovery is pending, it installs the native menu. Linux tray icons accept `linux_icon_name` for Freedesktop theme lookup and embedded PNG data, which is exposed as StatusNotifier `IconPixmap`.
+On Linux, native menus require a session D-Bus and an AppMenu registrar. The combined DVUI module uses the in-app menubar only when registrar absence is known; while asynchronous discovery is pending, it installs the native menu. Linux tray icons require a StatusNotifier watcher supplied by the desktop environment; without one, installation still succeeds but no icon is displayed. Linux tray icons accept `linux_icon_name` for Freedesktop theme lookup and embedded PNG data, which is exposed as StatusNotifier `IconPixmap`.
 
 ---
 
