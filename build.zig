@@ -46,7 +46,9 @@ fn linkNativeMenuBar(mod: *std.Build.Module, b: *std.Build, target: std.Build.Re
             mod.linkSystemLibrary("user32", .{});
         },
         .linux => {
-            const native_linux = b.graph.host.result.os.tag == .linux;
+            const native_linux = b.graph.host.result.os.tag == .linux and
+                b.graph.host.result.cpu.arch == target.result.cpu.arch and
+                b.graph.host.result.abi == target.result.abi;
             if (native_linux) {
                 mod.addCSourceFile(.{ .file = b.path("src/linux_dbus_menu.c") });
                 mod.addCSourceFile(.{ .file = b.path("src/linux_tray_png.c") });
